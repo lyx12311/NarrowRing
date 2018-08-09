@@ -1,0 +1,294 @@
+#!/usr/bin/perl -W
+# The first line defines the Perl Interpreter
+
+# This Program is a rewrite of "multi" in the Perl processing language.
+
+
+if ($#ARGV==-1) {&usage;}
+$logfile = &getlogfile("logfile");
+open(LOGFILE,"> $logfile");
+&setup();
+&doloop(@ARGV);
+print LOGFILE "ALL JOBS SUBMITTED\n"; 
+die("ALL JOBS SUBMITTED\n");
+
+
+
+sub getlogfile {
+   local($logfile) = @_; 
+   local($lfile,$num); 
+   $lfile = $logfile;
+   $num=1;
+   while (-e $lfile) {$num++;$lfile = $logfile ."$num";}
+   return $lfile;
+}
+
+
+sub doloop {
+@ARGV = @_;
+FILE:
+while (@ARGV) {
+  MACHINE:
+#  print LOGFILE "checking: "; # &flush(STDOUT);
+  foreach $j (@machines) {
+#    print LOGFILE "$j "; # &flush(STDOUT);
+    if ($j eq $homemachine) {              # home machine
+        $numtosubmit = &checklocal();
+	while ($numtosubmit > 0) {                 # submit $num runs
+ 	    &submitlocal();
+	    --$numtosubmit;
+	}
+        @ARGV || print LOGFILE "ALL JOBS SUBMITTED\n";
+        @ARGV || die("ALL JOBS SUBMITTED\n");
+    } else {                               # not home machine
+        $maxremote = 2;            # default of 2 jobs per remote machine
+        if ($j eq $Abacus) {$maxremote = 6}
+        $oktosubmit = &checkremote($maxremote);
+	if ($oktosubmit==1) {              # machine free
+            print LOGFILE "\n";
+ 	    &submitremote();
+            next FILE;
+	}
+    }
+  }
+#  print  "\n";
+#  print  ' >>>  sleep', " $waittime\n";
+# sleep($waittime);
+   sleep(1);  
+}
+}
+
+
+
+sub setup {
+    $numfiles = $#ARGV+1;
+    &checkuptime();
+    $text = "Program MULTI operating on the following $numfiles files:\n";
+    $text .= "--------------------------------------------------------------------\n";
+    $text .="@ARGV\n";
+    $text .= "--------------------------------------------------------------------\n";
+    $text .=  "Command to Execute? --> ";                 # Here is a comment character
+    print $text;
+    print LOGFILE $text; 
+    $command = <STDIN>;                # read from standard in
+    chop ($command);
+    print LOGFILE "$command\n";    # Here is a comment character
+    print "$command\n";    # Here is a comment character    
+    &definemachine();     # This subroutine prompts for machines to use
+#print " >>>   checking @machines \n";
+}
+
+sub checkuptime {
+    print "\n";
+    print "LOCAL MACHINE: ($ENV{'HOST'})  ";
+    system("uptime");
+    print "\n";
+}
+
+sub checklocal {
+    local($num);
+    @ps = `ps -ef`;
+#    @ps = grep(/hamilton.*time.*nice/, @ps);  # need grep -v "sh -c" to fix
+#    $num = $maxlocal - ($#ps +1);      # number of runs
+    @ps = grep(/sh.*time.*nice/, @ps);  # need grep -v "sh -c" to fix
+    $num = $maxlocal - ($#ps +1);      # number of runs    
+    if ($num > @ARGV) {$num=@ARGV};    # min (num runs, num files left)
+    return ($num);
+}
+
+sub checkremote {
+    local ($numjobs) = @_;
+    @ls = `ls`;
+    @ls2 = grep(/$j/,@ls);
+    if ($#ls2>=$numjobs-1) {            # if list @ls2 has elements ...
+	return 0;                       # then machine is not free
+    } else {
+         # strangely, the first rsh on a machine is fast          
+         # subsequent rsh'es are slow
+	@ps = `rsh $j "ps -ef"`;           # list @ps contains ps output
+	@ps = grep(/hamilton.*source/, @ps);  # list @ps contains grep output
+                                      # @ps = grep(/source.*hamilton/, @ps); 
+	if ($#ps>=$numjobs-1) {        # if list @ps has elements ...
+	    return 0;                  #then machine is not free
+	}
+    }
+    return 1;                          #machine is free
+}
+
+sub submitlocal { 
+    $outfile = $ARGV[0].$command;
+    if ($ARGV[0] =~ /(.*)\.[^\.]*/) {$outfile = $1.".".$command};
+    $com1 ="time -a -p -o $logfile nice -5 " . $command . " <$ARGV[0]> $outfile";
+#    $com1 ="(time " . $command . " <$ARGV[0]> $outfile) >& $logfile";    
+    $rm = ";rm -f $ARGV[0].$j";
+    $echo = ";echo $j finished $ARGV[0] [$#ARGV jobs remaining] >> $logfile";
+    $com  =  "(" . $com1 . $rm . $echo . ")" . " &";
+    system ("$com");                  # send command
+    open(RUNNING,"> $ARGV[0].$j");
+    print RUNNING "$com";
+    print LOGFILE"  $j:  $com1  [$#ARGV jobs in the queue]\n";
+    shift(@ARGV);                     # decrement file
+}
+
+sub submitremote {
+    $outfile = $ARGV[0].$command;
+    if ($ARGV[0] =~ /(.*)\.[^\.]*/) {$outfile = $1.".".$command};
+    $com1 = "rsh $j 'source $ENV{HOME}/.startup; cd $ENV{PWD};";
+    $com2 ="time -a -p -o $logfile nice +19 " . $command . " <$ARGV[0]> $outfile";
+    $rm = ";rm -f $ARGV[0].$j'";
+    $echo = ";echo $j finished $ARGV[0] ";
+    $com  =  "(" . $com1 . $com2 . $rm . $echo . ")" . " &";
+    system ("$com");                  # send command
+    open(RUNNING,"> $ARGV[0].$j");
+    print RUNNING "$com";
+    print LOGFILE  "  $j:  $com2\n";
+    shift(@ARGV);                     # decrement file
+    sleep 1
+}
+
+sub definemachine {                  # Here is a comment character
+##  local(*machines) = @_;
+
+  @machines = ();
+  $homemachine = ("local");
+  print "Maximum Local Jobs? (12) ";
+  print LOGFILE "Maximum Local Jobs? (12) ";   
+  $maxlocal = <STDIN>;
+  if ($maxlocal eq "\n") {$maxlocal = 12};
+  if ($maxlocal !=0) {
+      @machines = (@machines, $homemachine);
+  }
+  $maxlocal =~ s/\s//;     # remove whitespaces
+  $text =  "--> $maxlocal\n";
+  $text .= "Which Remote Machines?\n";    # Here is a comment character
+  $text .= "  3.21(l)ibra4    3.21(c)ygnus4   3.21(m)imas4   3.21(s)corpius4\n";
+  $text .= "  3.21(t)ethys4   3.21(i)apetus4  3.21(p)hoebe4  3.21(e)nceladus4\n";
+  $text .= "  3.21(P)roteus4  3.21ma(r)s2     3.21(M)ercury2 3.21(N)eptune2\n";
+  $text .= "  2.48(a)bacus8\n";
+  $text .= "  --> ";
+  print $text;  
+  print LOGFILE $text;
+  $whichhost = <STDIN>;
+  if ($whichhost =~ /A/) {$Abacus = ("abacus")}else{$Abacus=("")};
+## scores are HNBmarks  (hnbody -b)
+  if ($whichhost =~ /a/) {@machines =(@machines, "amalthea")};    # D.Hamilton
+  if ($whichhost =~ /c/) {@machines =(@machines, "cygnus")};  # dept
+  if ($whichhost =~ /l/) {@machines =(@machines, "libra")};  # dept
+  if ($whichhost =~ /s/) {@machines =(@machines, "scorpius")}; # dept  
+  if ($whichhost =~ /m/) {@machines =(@machines, "mimas")};  # dept
+  if ($whichhost =~ /e/) {@machines =(@machines, "enceladus")};  # dept
+  if ($whichhost =~ /t/) {@machines =(@machines, "tethys")};  # dept      
+  if ($whichhost =~ /i/) {@machines =(@machines, "iapetus")};  # dept      
+  if ($whichhost =~ /p/) {@machines =(@machines, "phoebe")};  # dept
+  if ($whichhost =~ /P/) {@machines =(@machines, "proteus")};  # dept          
+#  if ($whichhost =~ /d/) {@machines =(@machines, "dactyl")};   # Katie
+  if ($whichhost =~ /r/) {@machines =(@machines, "mars")};     # dept 2x64
+  if ($whichhost =~ /M/) {@machines =(@machines, "mercury")};  # dept 2x64
+  if ($whichhost =~ /N/) {@machines =(@machines, "neptune")};  # dept  
+  if ($whichhost =~ /0/) {@machines =(@machines, "yorp")};    # Theory 8Xeon 2009
+  if ($whichhost =~ /1/) {@machines =(@machines, "yorp1")};   # Theory 8Xeon 2009
+  if ($whichhost =~ /2/) {@machines =(@machines, "yorp2")};   # Theory 8Xeon 2009
+  if ($whichhost =~ /3/) {@machines =(@machines, "yorp3")};   # Theory 8Xeon 2009
+
+#  print "How often to ping machines (seconds)? (1) ";
+#  print LOGFILE "How often to ping machines (seconds)? (1) ";      
+#  $waittime = <STDIN>;
+#  if ($waittime eq "\n") {$waittime = 1};
+#  if ($waittime < 1) {$waittime = 1};  
+#  $waittime =~ s/\s//;     # remove whitespaces
+  $nummachines = $#machines+1;
+#  $text = "--> $waittime seconds\n";
+  $text = "$nummachines machines:   @machines\n";
+  $text .= "submitting $maxlocal jobs locally, ";
+#  $text .= "checking every $waittime seconds\n";
+  $text .= "checking every machines once per second\n";  
+  print "$text\n";  
+  print LOGFILE "$text\n";
+}
+
+
+
+sub usage {
+    my $program=$0;
+    if ($0 =~ /\/([^\/\s]+)$/) {$program=$1;}  # \ followed by not slashes.
+    print "Program $program takes one or more input files as arguments. It\n";
+    print "runs a multiple instances of command cmd as follows cmd < inputfiles > outfiles\n";
+    print "where outfiles have their extensions replaced with .cmd  - the user is prompted to\n";
+    print "provide cmd and the following options are supported: dI, dE, d2E, d2I, dSPHR, etc.\n";  
+    print "  Example: $program */*.in \n\n";
+    exit(1);
+}
+
+
+
+#  if ($whichhost =~ /v/) {@machines =(@machines, "virgo")};    # dept
+#  if ($whichhost =~ /c/) {@machines =(@machines, "cygnus")};   # dept
+#  if ($whichhost =~ /V/) {@machines =(@machines, "veil")};     # dept
+#  if ($whichhost =~ /e/) {@machines =(@machines, "europa")};   # Derek
+#  if ($whichhost =~ /P/) {@machines =(@machines, "pluto")};    # dept
+#  if ($whichhost =~ /n/) {@machines =(@machines, "naiad")};    # Stacy
+#  if ($whichhost =~ /s/) {@machines =(@machines, "scorpius")}; # dept
+#  if ($whichhost =~ /l/) {@machines =(@machines, "libra")};    # dept
+#  if ($whichhost =~ /C/) {@machines =(@machines, "corvus")};   # dept  
+
+
+# July 07, 2007 - switch to using HNBmarks.
+# deepthought: head node   - 2.13
+#              compute-1-0 - 2.13
+#              compute-2-0 - 2.23
+# venus2     : 3.4GHz machine, but only 1.29 HNBmarks?
+# neptune    : 1.8 GHz
+# mars       : 2.4 GHz (64 bit)  
+# try "more /proc/cpuinfo" on each coputer
+# try compiling on different machines
+#
+# Newer dItest - 5 years in Jup's octupole, RP, and Thebe, Amalthea, Io
+# Janus:     16.7 seconds            DPH
+# Plutino:   18.3                    DPH
+# Libra:     20.4                    dept
+# Scorpius:  15.4                    dept
+
+# NEW dItes - 1 year in Jupiter's B-field + Thebe Grav. (600 orbits)
+# cd dItest; rm out22; time dI<dItest.in>out22
+# machine   runtime  owner
+# ..........MY MACHINES
+# telesto     4.0   D.Hamilton
+# calypso     7.1   S.Kortenkamp
+# janus       9.9   D.Hamilton
+# epimetheus 23.6   D.Hamilton
+# ..........DEPARTMENT MACHINES
+# venus
+# newton
+# mercury
+# pluto     7.0
+# veil      7.1   Department
+# virgo     8.1   Department
+# crux      8.1   Department
+# ursa     10.2   Department
+# mars     10.3   Department
+# atlas    10.9   Department
+# earth    12.4   Department Server
+# cygnus   21.6   Department
+# aquila   21.1   Department
+# pegasus  22.6   Department
+# ..........PERSONAL MACHINES
+# phoenix   9.3   BIMA
+# surya     9.3   BIMA
+# sirius    7.0   E.Ostriker
+# nereid    8.6   S.McGaugh
+# oh        8.6   J.Stone
+# nstar     8.8   C.Miller
+# axaf      9.5   A.Wilson
+# lovell    9.5   A.Wilson
+# dustem   10.9   BIMA
+# corona   10.6   R.Bell
+# pleiades 12.8   BIMA
+# icarus   13.0   Comet
+# triton   13.8   S.McGaugh
+# psyche   14.7   Comet
+# metis    15.2   AV Williams
+# halley   17.6   Comet
+# herschel 19.0   R.Bell
+# encke    20.5   Comet 
+# simha    20.5   R.Bell  
+# carme    24.1   G.Milikh  

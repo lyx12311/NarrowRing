@@ -1,0 +1,356 @@
+#!/usr/bin/perl  -W 
+# The first line defines the Perl Interpreter
+# Written 12/2009 by DPH
+# Rewritten in 2/2011 by DPH
+
+$DPHpath = $ENV{"HOME"} . "/Dropbox/bin/perl";
+$studentpath=    $ENV{"HOME"} . "/bin";
+@INC =(@INC, "$DPHpath", "$studentpath");
+require 'lib.pl';
+&main;
+
+
+sub main {
+    $verbose=1;    # For Debugging: set to 2 or higher
+    &parseARGV(*ARGV,*patterns,*flags);
+    &SetFlags($flags);
+    if ($verbose) {&printARGV(*files,*patterns,*flags);}
+    $cmdfile="IC.in";
+    &ReadFiles("$cmdfile",*lines,*files);  # All files read and stored. 
+    $logfile="IC.dat";
+    &ParseIC();  # Parse the initial conditions file and read all inputfiles
+    $locked = &initlocked();
+    &doit();
+}
+
+
+## -----------------------------------------------------------------------------------------------
+
+# Tests the Syntax of the input file and exits on Error. 
+# a list of valid input command if the Syntax is OK. Otherwise exits
+# with an error message.
+# variable @lines filled with lines of the commandfile
+sub ReadFiles {
+    local($ICfile,*lines,*files) =@_;
+    local($i,@filenames);
+#    print "ICfile = $ICfile \n";
+
+    if (!(-e $cmdfile)) {&ICerror("Missing Command File $ICfile");}
+    open(ICFILE, "< $ICfile");              # read and process file
+    while (<ICFILE>) {
+        if (/^\s*$/) {next;}                # ignore blank lines
+        if (/^\#.*$/) {next}                # clip full line comments
+        if (/^(.*)\#.*$/) {push @lines, "$1\n";next} # clip cmts 
+        push @lines, $_;                  # keep entire line                
+    }
+    close(ICFILE);
+    if ($verbose) {print "COMMAND FILE:\n";foreach $i (@lines) {print $i;}} 
+    foreach $i (@lines) {
+        chop($i);
+        if ($i !~ /^\s*\S+\s*[:,=]\s*\{.*\S.*\}/) {
+            ICerror("Bad Syntax: Line '$i' from file $ICfile");
+        } 
+        if ($i =~ /FILES\s*[:,=]\s*\{(.*)\}/) {    # Reads from HNBfiles here
+            @filenames = split(/[\s,]/, $1);  
+	    if ($verbose) {print "FILES:"; foreach $i (@filenames) {print " [$i]";} print "\n";} 
+            @files = &ReadInputFiles(@filenames);  # Exits for file errors
+        } 
+    }
+}
+
+sub ReadInputFiles {
+    local(@filenames)=@_;    
+    local($file,$i,$j);
+    $i=0;
+
+    foreach $file (@filenames) {
+        if (defined($file)) {
+            if (!(-T $file)) {&ICerror("File '$file' not TEXT");}
+        } else {
+            &ICerror("File $file does not exist");
+        }
+        if ($verbose) {print "FILE $file OK\n";}
+        open(INFILE, "< $file");
+        @infile=<INFILE>;
+        $files[$i]="";
+        foreach $line (@infile) {$files[$i] .= $line;}
+        close(INFILE);
+        if ($verbose>=2) {print $files[$i];}	
+        $i++;
+    }
+#    if ($verbose) {foreach $j (@files) {print "[[$j]]";}}
+    unshift(@files,'ZERO');   # Add ZERO element to the front of the array
+    $files[0]=$#files;
+    @files;
+}
+
+
+## -----------------------------------------------------------------------------------------------
+
+sub ICerror {
+    local($msg)=@_;        
+    print " >>>> ERROR! $msg\n";
+    printUSAGE();
+}
+        
+sub printUSAGE {
+local($program,$USAGE);
+
+$program=$0;
+if ($0 =~ /\/([^\/\s]+)$/) {$program=$1;}  # \ followed by not slashes.
+$USAGE = <<"end_of_input";
+
+Program $program reads from "IC.in" and  from files specified 
+therein. The IC.in file has the following syntax:
+   FILES: {input.hnb user.in}                   # Files to Adjust
+   XXXX1: {Runge 1e-15, Bul 1e-15, Symp 1e-15}  # Replace XXXX1 w/ these
+   XXXX2: {0.01, 0.02, 0.03}                    # Replace XXXX2 w/ these
+   YYYY:  {100 10 1 0.1}                        # Replace YYYY w/ these
+   ZZZZ:  {1e-8 1e-9 1e-10}                     # Replace ZZZZ w/ these
+
+$program loops over the keywords and the values of the keywords and
+makes all possible different versions of the input files specified by
+the FILES command. Keywords that differ only by a trailing digit are
+locked and incremented together (XXXX1 and XXXX2 above). Each set of
+files is written to its own directory named e.g. "1.3.2".
+flags: -h print this screen 
+       -v verbose
+
+end_of_input
+print $USAGE;
+exit();
+}
+
+
+sub SetFlags {
+    local($flags) = @_;
+    local($x);
+
+    $x=0;
+    if (defined ($flags)) {
+        if    ($flags =~ /e(\d+)/) {$x= $1;}
+        if    ($flags =~ /h/)      {&printUSAGE();}
+        if    ($flags =~ /v/)      {$verbose = 1;}
+    }
+}
+
+## -----------------------------------------------------------------------------------------------
+
+
+sub ParseIC {
+    local($j,$k,$indexlocked);
+#    local(@keywords,@filenames,@lockedkw);    
+    
+    $j=0;$k=0;$indexlocked=0;
+    @keywords=(ZERO); @filenames=(ZERO); # @lockedkw=(ZERO);    
+    foreach $i (@lines) {
+        if ($i =~ /FILES\s*[:,=]\s*\{(.*)\}/) {    # Handle FILES keyword separately
+	    $tmp = $1;
+            @filenames = split(/[,\s]/, $tmp);  # split on either character
+	    if ($verbose) {print "FILES:"; foreach $i (@filenames) {print " [$i]";} print "\n";} 
+	    unshift(@filenames,'ZERO');   # Add ZERO element to the front of the array
+	    $filenames[0]=$#filenames;
+        } else {  # Handle all other keywords
+            if ($i =~ /^\s*(\S+)\s*[:,=]\s*\{(.*\S)\}\s*$/) { #match key:val
+                push @keywords, $1;
+                $j++;
+                @values = split(/,/, $2);                        # try splitting on commas
+                if ($#values ==0) {@values = split(/\s/, $2);}   # if fail, split on spaces
+                $allvalues[$j][0] = $#values+1;   # [0] contains numelements
+                for $k (1 .. $allvalues[$j][0]) {
+                    $allvalues[$j][$k] = $values[$k-1];
+                }
+            } else {
+                print "Syntax Error with line: $i\n";
+                exit();
+            }
+	}
+    }
+    $keywords[0]=$#keywords;
+    $allvalues[0][0] = $j;   # [0] contains numelements
+#    @islocked = &parselocked(*keywords,*lockedkw);  # pass by reference?
+    if ($verbose) {&printvalues();}
+#    print "islocked array: @islocked \n";
+#    print "filenames array: @filenames \n";
+#    print "keywords array: @keywords \n";
+}
+
+
+#            } elsif ($i =~ /^\s*LOCK\s*[:,=]\s*(\S.*)$/) { #match lock    CUT??
+#                $lockedkw[++$indexlocked] = $1;
+#                                    #print "lockedkw = @lockedkw\n";
+
+
+
+
+    
+# allvalues[0][0] contains the number of Keywords   
+# allvalues[j][0] contains the number of values for the jth keyword   
+# allvalues[j][k] contains the kth value of the jth keyword   
+# keywords[0] contains the number of keywords
+# keywords[j] contains the jth keyword
+# filenames[0] contains the number of filenames
+# filenames[j] contains the jth filename
+# files[0] contains the number of files
+# files[j] contains the contents of the jth file
+
+sub printvalues {
+    if ($allvalues[0][0] == 0) {print "No Keywords in the input files - no action taken.\n";}
+    print "SUBROUTINE PRINTVALUES has ... \n";
+    print "$allvalues[0][0] keywords\n";
+    for ($j=1;$j<=$allvalues[0][0];$j++) {
+        print "  Keyword $j: [$keywords[$j]] = ";
+        for $k (1 .. $allvalues[$j][0]) {
+            print "[$allvalues[$j][$k]] ";
+        }
+        print "  ($allvalues[$j][0] values)\n";        # End of Keyword line
+    }
+}
+
+sub printfiles {
+    print "SUBROUTINE PRINTFILES ... \n";
+    for ($j=1;$j<=$filenames[0];$j++) {
+        print "  File $j: [$filenames[$j]] = \n";
+	print "$files[$j] \n";
+    }
+}
+    
+
+# counter is an array that loops through all values for each keyword
+# This loops through all possible combinations of keyword values ...
+sub increment {
+    local(@counter) = @_;
+    local($j,$increment);
+
+    
+    $increment =1;
+    for ($j=$allvalues[0][0];$j>=1;$j--) {
+        $counter[$j] += $increment;
+        if ($counter[$j] > $allvalues[$j][0]) {
+            $counter[$j] = 1;      # set digit to 1, carry the 1
+        } else {
+            $increment=0;          # leave digit, do not carry the 1
+        }
+    }
+    if ($counter[1] ==1 && $increment==1) {$counter[1]=0;} #finished
+    @counter;
+}
+
+sub initcounter {
+    $counter[0]=0;  
+    for ($j=1;$j<=$allvalues[0][0];$j++) {push @counter, 1;}
+    $counter[0]=$#counter;  
+#    print "counter = @counter\n"; 
+    return(@counter);
+}
+
+
+
+sub doit {
+#    &printfiles();
+    my ($i,$j);
+    @counter = &initcounter();
+#    print "filenames = $filenames[1], $filenames[2]\n"; 
+    $summaryfile = "keyword: ";  
+    for ($j=1;$j<=$allvalues[0][0];$j++) {$summaryfile .= " $keywords[$j] ";} 
+    $summaryfile .= "\n" . "filename: ";     
+    for ($j=1;$j<=$filenames[0];$j++) {$summaryfile .= " $filenames[$j] ";} 
+    $summaryfile .= "\n";
+    while ($counter[1] > 0) {    # go through all combinations of keyword values
+#        $file=$files[1];  # always start with the first file
+	@newfiles = @files;
+        $dir="";
+        for ($j=1;$j<=$#counter;$j++) { 
+	    $dir .= "$counter[$j]"; if ($j != $#counter) {$dir .= "_";} # construct directory name
+	} 
+#        print $dir;
+        mkdir $dir;
+        $summaryfile .= ("DIRECTORY $dir: ");
+        for ($j=1;$j<=$#counter;$j++) {
+            $value = $allvalues[$j][$counter[$j]];
+#            print "value[$j] = [$value]\n";
+#            print "keywords[$j] = [$keywords[$j]]\n";            
+#            $file =~ s/^(\s*$keywords[$j]\s*[:=]).*$/$1 $value/;
+#	    print "j,counter, value = $j, @counter, $value\n"; 
+	    for ($i=1;$i<=$#filenames;$i++) {    # substitute on keyword value in all files
+#		$newfiles[$i] =~ s/(\s*$keywords[$j]\s*[:=]).*\n/$1 $value\n/;
+		$newfiles[$i] =~ s/$keywords[$j]/$value/;
+	    } 
+#            $file =~ s/$keywords[$j]/XXXX/m;
+#            print "[$file]"; 
+#            print "subsitution in $filenames[$j]\n";            
+            $summaryfile .= "[$allvalues[$j][$counter[$j]]] ";
+        }
+	for ($i=1;$i<=$#filenames;$i++) {    # substitute on keyword value in all files
+	    open(OUTFILE, ">$dir/$filenames[$i]");
+	    print OUTFILE $newfiles[$i];
+	    close OUTFILE;
+	}
+        $summaryfile .= ("\n");
+        @counter = &increment(@counter);
+        while ($counter[1]>0 && &invalid(@counter)) {
+            @counter = &increment(@counter);
+        }
+    }
+    open (LOG, "> $logfile");
+    print LOG  $summaryfile;
+    close(LOG);
+    if ($verbose) {print "SUMMARY FILE:\n";print $summaryfile;}
+    
+}
+
+
+# Returns a 1 is the counter has a valid value and a 0 otherwise
+sub invalid {    
+    local(@counter) = @_;
+    local($i,$j);
+
+    for ($i=1;$i<=$#counter;$i++) {    
+        for ($j=$i+1;$j<=$#counter;$j++) {
+            if ($locked[$i]==$locked[$j] && $locked[$i]>0) {
+                if( $counter[$i]!=$counter[$j]) {
+                    return 1; # counter has an invalid value
+                }
+            }
+        }
+    }
+    return 0; # counter has a valid value
+}
+
+
+
+# creates an array, @locked, with one element for each keywork that has value zero unless keywords are locked. 
+# keywords that are locked are same names with different digits at the end: e.g. XXXX1 and XXXX2
+# locked keywords are given a unique integer identifier in @locked, e.g. "1" for the first pair, "2" for the next triple," etc.
+
+sub initlocked { 
+    my($i,$j,$value,$match);
+    my($keyi,$keyj);
+
+    $locked[0] = $#keywords;
+    for $i (1 .. $#keywords) {
+	$locked[$i]= 0;              # initialized locked to all zeroes
+    }
+    $value = 1;
+    for $i (1 .. $#keywords) {
+	if ($locked[$i] !=0) {next;}  # matches already found, increment
+	$match = 0;          # increment i, this keyi has no match yet
+	$keyi = $keywords[$i];
+	$keyi =~ s/\d//;            #remove trailing digits
+#	print "keyi= $keyi\n";
+	for $j ($i+1 .. $#keywords) {
+	    $keyj = $keywords[$j];
+	    $keyj =~ s/\d//;            #remove trailing digits
+#	    print "keyj= $keyj\n";
+	    if ($keyi eq $keyj) {
+		$locked[$i] = $value;
+		$locked[$j] = $value;	    
+		$match = 1;    # A match is found for $keyi!
+	    }
+	}
+	if ($match == 1) {$value++;}
+    }
+    @locked;
+}
+
+

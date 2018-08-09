@@ -1,0 +1,32 @@
+#! /bin/csh
+# Program pushcodes copies key codes from their source directories over to $dest for use by Prof.
+#
+
+set lucy  = "/n/a2/lyx"
+set dest = "$lucy/Modelib"
+
+#set src = "$lucy/MacCodes"
+#foreach i (DrawPNG.py DrawPNG_polar.py mkmov.sh mkmov_polar.sh)
+#  rsync -a $src/$i $dest/$i
+#end  
+ 
+set src = "/Users/lucy/Desktop/NarrowRings/bin"
+foreach i (*.py)
+   scp $src/$i lyx@styx.astro.umd.edu:$dest/$i
+   #echo "files"
+end
+
+echo "All files Updated."
+#ls -lt $dest 
+
+
+
+
+
+
+
+
+
+
+
+

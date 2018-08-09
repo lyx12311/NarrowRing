@@ -1,0 +1,10 @@
+#!/usr/bin/perl -W
+# The first line defines the Perl Interpreter
+# Written 01/02/98 by DPH
+
+while (<>) {
+    $_ =~ s/\^/\*\*/g;
+    print eval $_,"\n";
+    die $@ if $@;      # $@ contains an error message
+}
+

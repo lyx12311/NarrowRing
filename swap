@@ -1,0 +1,27 @@
+#! /bin/csh
+# This C shell script swaps the names of two files supplied on the input
+# line i.e. "swap f1 f2" puts the contents of f1 in f2 and the contents
+# of f2 into f1. 
+
+
+if ($#argv !~ 2) then
+    echo "Program swap requires two valid filenames as arguments"
+    echo "It simply moves file1 -> file2 and file2 -> file1"
+    echo "Example:   swap file1 file2\n"
+    exit(1); 
+endif
+
+if (-e $argv[1] !~ 1) then
+    echo Error: first argument is not a file!
+    exit(1); 
+    
+endif
+
+if (-e $argv[2] !~ 1) then
+    echo Error: second argument is not a file!
+    exit(1); 
+endif
+
+mv $argv[1] tmp.$$
+mv $argv[2] $argv[1]
+mv tmp.$$ $argv[2]

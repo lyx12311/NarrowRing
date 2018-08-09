@@ -1,0 +1,81 @@
+#!/usr/bin/perl  -W 
+# The first line defines the Perl Interpreter
+# Written 05/23/09 by DPH
+
+use File::Copy;
+
+@dir=@ARGV;
+$numargs =  scalar @dir;
+if ($numargs < 2) {&usage("too few arguments");}
+if ($numargs > 2) {&usage("too many arguments");}
+&existence($dir[0],$dir[1]);
+&dodiff($dir[0],$dir[1]);
+
+
+sub dodiff {
+    local($dir1,$dir2)=@_;
+    local($i);
+    for ($i=0;$i<=$#dir1file;$i++) {
+	print "diff $dir1file[$i] $dir2file[$i]\n";
+	system ("diff $dir1file[$i] $dir2file[$i]");
+    }
+}
+
+# Ensures that both directories exist and that the .hnb and .in file lists
+# match
+
+sub existence {
+    local($dir1,$dir2)=@_;
+    local($i,$num);
+    if (!(-d $dir1)) {&usage("directory $dir1 does not exist!");}
+    if (!(-d $dir2)) {&usage("directory $dir2 does not exist!");}
+    open(HNBFILE, "ls $dir1/*.hnb|");
+    open(INFILE,  "ls $dir1/*.in|");
+    @dir1file=();
+    while (<HNBFILE>) {@dir1file=(@dir1file, $_);}
+    while (<INFILE>)  {@dir1file=(@dir1file, $_);}
+    close (HNBFILE);
+    close (INFILE);
+    open(HNBFILE, "ls $dir2/*.hnb|");
+    open(INFILE,  "ls $dir2/*.in|");
+    @dir2file=();
+    while (<HNBFILE>) {@dir2file=(@dir2file, $_);}
+    while (<INFILE>)  {@dir2file=(@dir2file, $_);}
+    close (HNBFILE);
+    close (INFILE);
+    for ($i=0;$i<=$#dir1file;$i++) {
+	chomp($dir1file[$i]);
+	chomp($dir2file[$i]);
+	$dir1file[$i] =~ /^.*\/(.*)$/;
+	$filename1=$1;
+	$dir2file[$i] =~ /^.*\/(.*)$/;
+	$filename2=$1;
+	$num=$i+1;
+        print "Filename #$num: $filename1 vs. $filename2\n";
+	if ($filename1 ne $filename2) {
+#	    print("filenames do not match! \n");
+	    usage("filenames do not match!");            
+	}
+    }
+    print "Found $num files in common; running diff on each pair\n";    
+}
+
+
+#	if (!(-e $_)) {die "file $_ does not exist!\n";}    
+# @ARGV = &parseARGV(*ARGV,*patterns,*flags);
+# &printARGV(*ARGV,*patterns,*flags);
+
+
+sub usage {
+    my $program=$0;
+    if ($0 =~ /\/([^\/\s]+)$/) {$program=$1;}  # \ followed by not slashes.    
+    local($msg)=@_;    
+    print "ERROR: $msg\n";
+    print "Program $program takes 2 directory arguments.\n";
+    print "It looks for files ending in .hnb and .in in each \n"; 
+    print "directory and runs the system command diff on matching pairs\n";
+    print "  Example: hnbdiff r1 r2 \n\n";
+    exit(1);
+}
+
+

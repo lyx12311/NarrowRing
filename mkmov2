@@ -1,0 +1,3 @@
+#!/bin/csh 
+
+ffmpeg -framerate 10 -i state%d.png -loglevel warning -pix_fmt yuv420p -y movie.mp4
