@@ -1,3 +1,23 @@
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Author: Lucy Lu (last update 08/09/2018)
+# Contain functions: 
+#	chkEle(filename,*positional_parameters,**elementCheck) [check if one/all elements are avaliable to calculate]
+#		filename: state/body file that contains a headerline
+#		*positional_parameters: 'element'
+#		**elementCheck: can be anything from 't' to 'mass' see in function geteleInd for more info
+#
+#			example: chkEle('state1.dat',element='a') returns 1 (can be caculated/read) or 0 (cannot be calculated/read)
+#			example: chkEle('state1.dat') returns 1 x 27 array with 0's (cannot be calculated/read) and 1's (can be caculated/read)
+#
+#	geteleInd(element) [returns the index of element in hnbody files]
+#		element: the element name as a string, read function for more info
+#		
+#			example: geteleInd('t') returns 0 
+#
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 import numpy as np
 import math
 import os
@@ -12,7 +32,7 @@ from scipy.interpolate import interp1d
 #from hnread import *
 #from convert_anomalies import *
 
-def chkEle(filename,elementCheck):
+def chkEle(filename,*positional_parameters,**elementCheck):
 	# get headerlines
 	with open(filename) as f:
 		parts=f.readlines()
@@ -21,7 +41,7 @@ def chkEle(filename,elementCheck):
 	#print headerlines
 	#headerlines=np.array(
 	
-	checkarray=np.zeros(26)
+	checkarray=np.zeros(27)
 	
 	# initial condition
 	for i in range(len(checkarray)):
@@ -36,7 +56,7 @@ def chkEle(filename,elementCheck):
 		checkarray[14]=1
 		
 	# true and mean anomoly 
-	if checkarray[15]+checkarray[16] > 0:
+	if checkarray[15]+checkarray[16] > 0 and checkarray[8]==1:
 		checkarray[15]=1
 		checkarray[16]=1
 	
@@ -90,10 +110,13 @@ def chkEle(filename,elementCheck):
 
 	
 	#print checkarray
-	if len(elementCheck)==0
+	if 'element' in elementCheck:
+		#print elementCheck['element']
+		#print checkarray[geteleInd(elementCheck)]
+		return int(checkarray[geteleInd(elementCheck['element'])])
+	else:
 		return checkarray
-	if len(elementCheck)==1
-		return int(checkarray[geteleInd(elementCheck)])
+
 	
 #chkEle('state1.dat')
 
