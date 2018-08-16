@@ -63,23 +63,55 @@ filenumb, filename = zip(*sorted(zip([int(i) for i in filenumb],filename)))
 #print filenumb
 #print filename
 #print filenumb
-filetp = filename[0:len(filename):int(len(filename)/ptp)]
-filenp = filenumb[0:len(filename):int(len(filename)/ptp)]
+filetp = filename[0:len(filename):int(round(float(len(filename))/float(ptp)))]
+filenp = filenumb[0:len(filename):int(round(float(len(filename))/float(ptp)))]
 #print filenp
 #print filetp
 
-if len(filetp)!=ptp:
+realN=len(filetp)
+if realN!=ptp:
 	print "Optimized to plot "+ str(len(filetp))+" plots instead of "+str(ptp)+" plots!"
 	
 #print filetp
 
-subplotNum = int(math.ceil(ptp**0.5))
+# set up plot numbers
+mp=[]
+for i in range(realN+1):
+	if i==0:
+		continue
+	elif float(realN)/float(i) - int(float(realN)/float(i)) == 0:
+		mp.append(i)
+
+#print mp
+	
+if len(mp)==2:
+	if mp[-1] < 10:
+		subplotNumR=mp[-1]
+		subplotNumC=1
+	else:
+		subplotNumR=int(math.ceil(float(realN)**0.5))
+		subplotNumC=subplotNumR
+else:
+	#print "mp not 2"
+	if mp[int(np.floor(len(mp)/2.))]==mp[int(np.ceil(len(mp)/2.))]:
+		subplotNumR=mp[int(np.floor(len(mp)/2.))-1]
+		subplotNumC=mp[int(np.ceil(len(mp)/2.))]
+	else:
+		subplotNumR=mp[int(np.floor(len(mp)/2.))]
+		subplotNumC=mp[int(np.ceil(len(mp)/2.))]
+	
+	if abs(subplotNumR-subplotNumC) > 6:
+		subplotNumR=int(math.ceil(float(realN)**0.5))
+		subplotNumC=subplotNumR
+
+#print subplotNumR
+#print subplotNumC
 
 #print subplotNum
-fig, axes = plt.subplots(nrows=subplotNum, ncols=subplotNum,figsize=(ptp, 0.7*ptp))
+fig, axes = plt.subplots(nrows=subplotNumR, ncols=subplotNumC,figsize=(realN, realN/(float(subplotNumC)/float(subplotNumR))))
 subplotnumber=1
 for file in filetp:
-	plt.subplot(subplotNum,subplotNum,subplotnumber)
+	plt.subplot(subplotNumR,subplotNumC,subplotnumber)
 	#print getEle(file,"t")
 	
 	plt.plot(getEle(file,"t"),getEle(file,elem))
