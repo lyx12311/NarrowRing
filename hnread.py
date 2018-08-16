@@ -33,7 +33,7 @@ r2d = 57.2957795131
 def hnread(filename,typename):
 	#print filename
 	if typename == "state":
-		headerline = 19
+		headerline = 18
 		#print "identify as state file"
 		with open(filename) as f:
 			parts=f.readlines()
