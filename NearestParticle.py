@@ -12,6 +12,7 @@ from decimal import *
 import matplotlib.cm as cm
 import random
 from scipy.interpolate import interp1d
+import scipy.fftpack
 from hnread import *
 from center_angle import *
 d2r = 0.01745329251
@@ -45,36 +46,103 @@ if pathname[-1]=="/":
 positiondiff=[]
 avePositiondiff=[]
 t=[]
+inte=0
 for file in glob.glob(os.path.join(pathf,'state*.dat')):
 	data=hnread(file,"state")
 	LongTit = [center_angle(i,-180,180) for i in (data[:,-2]+data[:,-3])]
 	positiondiff.append(center_angle(LongTit[upPart-1]-LongTit[bottomPart-1],-180,180))
 	avePositiondiff.append(np.mean([center_angle(LongTit[i+1]-LongTit[i],-180,180) for i in range(len(LongTit)-1)]))
 	t.append(data[0,0])
-	if 'state0.dat' in str(file):	
+	if inte==0:	
 		initialDiff=center_angle(LongTit[upPart-1]-LongTit[bottomPart-1],-180,180)
 		initialDiffAve=np.mean([center_angle(LongTit[i+1]-LongTit[i],-180,180) for i in range(len(LongTit)-1)])
+	inte=inte+1
 
 t, positiondiff, avePositiondiff = zip(*sorted(zip(t, positiondiff, avePositiondiff)))
 positiondiff=[(i-initialDiff) for i in positiondiff]
-plt.subplot(211)
-plt.plot(t,positiondiff,'-o')
-plt.title('Longtitude difference for particle '+ str(upPart-1) + ' and particle ' + str(bottomPart-1))
-plt.xlabel('Time [yr]')
-plt.ylabel('Longtitude difference [degrees]')
+
+#t_fft=t[0:int(len(t)/2.)]
+#positiondiff_fft=positiondiff[0:int(len(t)/2.)]
+t_fft=t
+positiondiff_fft=positiondiff
+
+
+# do fft
+tmin=min(t_fft)
+tmax=max(t_fft)
+Fs=200000.
+Ts=(tmax-tmin)/Fs
+t_int=np.linspace(tmin,tmax,Fs) # time vector
+n = len(positiondiff_fft) # length of the signal
+Y=np.fft.fft(positiondiff_fft)
+Y = 2./n*abs(Y[0:n/2])
+frq=np.linspace(tmin/(2.*Ts),tmax/(2.*Ts),int(n/2))
+
 rangeDiff=max(positiondiff)-min(positiondiff)
-plt.ylim([min(positiondiff)-0.1*rangeDiff,max(positiondiff)+0.1*rangeDiff])
-plt.subplot(212)
-plt.plot(t,avePositiondiff,'-o')
-plt.title('Avereage longtitude difference')
-plt.xlabel('Time [yr]')
-plt.ylabel('Longtitude difference [degrees]')
 toplim=(np.mean(avePositiondiff))-0.6*rangeDiff
 bottomlim=(np.mean(avePositiondiff))+0.6*rangeDiff
 if np.std(avePositiondiff) < (bottomlim-toplim)/2:
-#print toplim
-#print bottomlim
+	plt.figure()
+	plt.subplot(411)
+	plt.plot(t,positiondiff,'-o')
+	plt.title('Longt diff for particle '+ str(upPart-1) + ' and particle ' + str(bottomPart-1))
+	plt.xlabel('Time [yr]')
+	plt.ylabel('Longt diff [degrees]')
+	plt.ylim([min(positiondiff)-0.1*rangeDiff,max(positiondiff)+0.1*rangeDiff])
+
+	plt.subplot(412)
+	plt.semilogy(frq,abs(Y))
+	plt.title('FFT of '+'Longt diff for particle '+ str(upPart-1) + ' and particle ' + str(bottomPart-1))
+	plt.xlabel('Frequency [1/yr]')
+	plt.ylabel('|Y(freq)|')
+	#fftrange=max(abs(Y))-min(abs(Y))
+	#toplim=(min(abs(Y)))-0.1*fftrange
+	#bottomlim=(max(abs(Y)))+0.1*fftrange
+	#plt.ylim([toplim,bottomlim])
+	plt.ylim([-0.001,1])
+
+	plt.subplot(413)
+	plt.plot(t,avePositiondiff,'-o')
+	plt.title('Avereage longtitude difference')
+	plt.xlabel('Time [yr]')
+	plt.ylabel('Longt diff [degrees]')
 	plt.ylim([toplim,bottomlim])
-plt.tight_layout()
+
+	plt.subplot(414)
+	plt.plot(t,avePositiondiff,'-o')
+	plt.xlabel('Time [yr]')
+	plt.ylabel('Longt diff [degrees]')
+
+else:
+	plt.figure()
+	plt.subplot(311)
+	plt.plot(t,positiondiff,'-o')
+	plt.title('Longt diff for particle '+ str(upPart-1) + ' and particle ' + str(bottomPart-1))
+	plt.xlabel('Time [yr]')
+	plt.ylabel('Longt diff [degrees]')
+	plt.ylim([min(positiondiff)-0.1*rangeDiff,max(positiondiff)+0.1*rangeDiff])
+
+	plt.subplot(312)
+	plt.semilogy(frq,abs(Y))
+	#plt.plot(frq,abs(Y))
+	plt.title('FFT of '+'Longtitude difference for particle '+ str(upPart-1) + ' and particle ' + str(bottomPart-1))
+	plt.xlabel('Frequency [1/yr]')
+	plt.ylabel('|Y(freq)|')
+	#fftrange=max(abs(Y))-min(abs(Y))
+	#toplimfft=(min(abs(Y)))-0.1*fftrange
+	#bottomlimfft=(max(abs(Y)))+0.1*fftrange
+	#plt.ylim([toplimfft,bottomlimfft])
+	plt.ylim([-0.001,0.8])
+
+	plt.subplot(313)
+	plt.plot(t,avePositiondiff,'-o')
+	plt.title('Avereage longtitude difference')
+	plt.xlabel('Time [yr]')
+	plt.ylabel('Longt diff [degrees]')
+	#plt.ylim([toplim,bottomlim])
+	plt.tight_layout()
+		
+plt.savefig(pathf+"/NearestParticleDis"+str(sys.argv[2])+str(sys.argv[3])+".png")   
+
+
 plt.show()
-plt.savefig(path+"/NearestParticleDis"+str(sys.argv[2])+str(sys.argv[3])+".png")   
