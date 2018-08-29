@@ -22,11 +22,11 @@ r2d = 57.2957795131
 
 def checkinput(argv):                                                                       
     programname = sys.argv[0]                                                               
-    if len(argv) != 2:  # Exit if not exactly one arguments  
+    if len(argv) != 2 and len(argv) != 3:  # Exit if not exactly one arguments  
     	print '---------------------------------------------------------------------------'                               
-        print 'This program creates a movie of the fft of the ring vs time based on hnbody state files.\n It takes into the folder name as argument \n'
+        print "This program creates a movie of the fft of the ring vs time based on hnbody state files.\n It takes into the folder name as argument \n Add 0 to the end if you don't want output"
 	print ' '
-	print ' Example:    '+programname+' m1'  
+	print ' Example:    '+programname+' m1 0'  
 	print '---------------------------------------------------------------------------'                                    
         sys.exit(1)                                                                         
     gridfile = argv[1]                                                                                                                                    
@@ -36,7 +36,11 @@ def checkinput(argv):
 
 checkinput(sys.argv)
 
-outputInt=1
+if len(sys.argv)==3:
+	outputInt=0
+else:
+	outputInt=1
+	
 if outputInt==1:
 	print "peak heights are"
 
@@ -47,7 +51,15 @@ if outputInt==0:
 	print pathname
 if pathname[-1]=="/":
 	path=pathname[0:-1]
-
+try:
+	numbpart=hnread(pathname+"/stream2.in","stream")
+except:
+	try:
+		numbpart=hnread(pathname+"/stream.in","stream")
+	except:
+		print "Can't find stream.in or stream2.in file"
+		sys.exit(1)
+#print numbpart
 # count files
 numfile=0
 for file in glob.glob(os.path.join(path,'state*.dat')):
@@ -60,13 +72,14 @@ for file in glob.glob(os.path.join(path,'state*.dat')):
 	numfilec+=1
 	#print file
 	if outputInt==0:
-		print str(int(float(numfilec)/float(numfile)*100))+"% completed"
+		if int(float(numfilec)/numfile*100)-int(float(numfilec-1)/numfile*100)!=0:
+			print str(int(float(numfilec)/numfile*100))+"% done"
 	#print file
 	name = file.split('/')
 	#print name
 	PNGName = str(name[-1])
 	try:
-		unevenfft(file,10000,5,10,outputInt)
+		unevenfft(file,numbpart*10,10,10,outputInt)
 		#print str(path)+"/pngfiles/"+PNGName+'.png'
 		plt.savefig(str(path)+"/pngfiles/"+PNGName+'.png')
 		plt.close()
@@ -75,8 +88,8 @@ for file in glob.glob(os.path.join(path,'state*.dat')):
 			print "Warning: Can't fft file "+str(file)
 		continue
 
-#	unevenfft(file,2000,3,5,1)
-#	unevenfft(file,10000,5,10,1)
+#	unevenfft(file,numbpart*10,10,10,outputInt)
+##	unevenfft(file,10000,5,10,1)
 #	plt.savefig(str(path)+"/pngfiles/"+PNGName+'.png')
 #	plt.close()
 
