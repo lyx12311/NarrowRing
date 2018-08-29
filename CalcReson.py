@@ -55,10 +55,14 @@ else:
 Dis=[]
 for f in Ref:
 	for b in Reb:
-		DisU=calcR(f,b,Rdis)
-		print str(int(f))+":"+str(int(b))+" "+str(DisU)
-		Dis.append(DisU)
+		if f==b:
+			continue
+		else:
+			DisU=calcR(f,b,Rdis)
+			print str(int(f))+":"+str(int(b))+" "+str(DisU)
+			Dis.append(DisU-0.02)
 
+print "Suggested starting positions are:"
 print Dis
 		
 
