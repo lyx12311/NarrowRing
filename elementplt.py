@@ -83,8 +83,11 @@ for i in range(realN+1):
 		mp.append(i)
 
 #print mp
-	
-if len(mp)==2:
+
+if realN**0.5-int(realN**0.5)==0:
+	subplotNumR=int(realN**0.5)
+	subplotNumC=int(realN**0.5)	
+elif len(mp)==2:
 	if mp[-1] < 10:
 		subplotNumR=mp[-1]
 		subplotNumC=1
@@ -121,6 +124,6 @@ for file in filetp:
 	subplotnumber=subplotnumber+1
 
 #fig.suptitle(str(sys.argv[2])+"vs time for "+str(len(filetp))+" particles", fontsize=ptp*2)	
-fig.tight_layout() # 
+#fig.tight_layout() # 
 plt.savefig(path+"/element_"+str(sys.argv[2])+"_"+str(len(filetp))+".png")	
 #plt.show()

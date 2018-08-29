@@ -45,23 +45,38 @@ positiondiff=[]
 avePositiondiff=[]
 t=[]
 crossp=0
+
+# count and sort files
+numfile=0
+filename=[]
+filenumb=[]
 for file in glob.glob(os.path.join(pathf,'state*.dat')):
+	numfile+=1
+	filename_one =(file.split('/'))[-1]
+	filename.append(str(file))
+	filenumb.append(filename_one.split('e')[-1].split('.')[-2])
+
+filenumb, filename = zip(*sorted(zip([int(i) for i in filenumb],filename)))
+
+for file in filename:
+	#print file
 	data=hnread(file,"state")
 	t=data[0,0]
 	LongTit = [center_angle(i,-180,180) for i in (data[:,-2]+data[:,-3])]
 	Longdiff = [center_angle(LongTit[i+1]-LongTit[i],-180,180) for i in range(len(LongTit)-1)]
+	#Longdiff = [(LongTit[i+1]-LongTit[i]) for i in range(len(LongTit)-1)]
 	signdiff=np.sign(Longdiff)
 	sign_reff=np.sign(sum(signdiff))
-	for i in signdiff:
-		if i == -sign_reff:
-			print "particle crossed at time "+str(t)
+	#print signdiff
+	for i in range(len(signdiff)):
+		if signdiff[i] == -sign_reff:
+			print "particle "+str(i+1)+ " crossed at time "+str(t)+ ", changed by "+str(Longdiff[i])+" degrees"
 			crossp=crossp+1
 
 if crossp==0:
 	print "all particles stayed in order"
 		
 		
-	#print signdiff
 	
 		
 	
