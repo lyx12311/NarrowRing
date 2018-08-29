@@ -218,7 +218,7 @@ def unevenfft(filename,Fs,N,dub,opt):
 	ax[3].plot(np.array(sortedFre_z[-int(N+1):-1])/float(dub+1),sortedY_z[-int(N+1):-1],'.')
 	ax[3].set_title(titlefre_z)
 	ax[3].set_xlim([1,max(frq)/float(dub+1)])
-	ax[3].set_ylim([0,1e-6])
+	ax[3].set_ylim([1e-11,1e-6])
 	ax[3].set_xlim([1,max(frq)/float(dub+1)])
 	ax[3].set_xlabel('Freq (1/degrees)')
 	ax[3].set_ylabel('|Y_z(freq)|')
