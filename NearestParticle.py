@@ -35,9 +35,10 @@ def checkinput(argv):
 checkinput(sys.argv)
 pathf=sys.argv[1] ## put second input into file 
 
-upPart=max([int(i) for i in [sys.argv[2],sys.argv[3]]])+1
-bottomPart=min([int(i) for i in [sys.argv[2],sys.argv[3]]])+1
-
+upPart=max([int(i) for i in [sys.argv[2],sys.argv[3]]])
+bottomPart=min([int(i) for i in [sys.argv[2],sys.argv[3]]])
+#print upPart
+#print bottomPart
 pathname=str(pathf)
 #print pathnames
 if pathname[-1]=="/":
@@ -51,6 +52,9 @@ for file in glob.glob(os.path.join(pathf,'state*.dat')):
 	data=hnread(file,"state")
 	LongTit = [center_angle(i,-180,180) for i in (data[:,-2]+data[:,-3])]
 	positiondiff.append(center_angle(LongTit[upPart-1]-LongTit[bottomPart-1],-180,180))
+	#print center_angle(LongTit[upPart-1]-LongTit[bottomPart-1],-180,180)
+	#print LongTit[upPart-1]
+	#print LongTit[bottomPart-1]
 	avePositiondiff.append(np.mean([center_angle(LongTit[i+1]-LongTit[i],-180,180) for i in range(len(LongTit)-1)]))
 	t.append(data[0,0])
 	if inte==0:	
@@ -59,7 +63,7 @@ for file in glob.glob(os.path.join(pathf,'state*.dat')):
 	inte=inte+1
 
 t, positiondiff, avePositiondiff = zip(*sorted(zip(t, positiondiff, avePositiondiff)))
-positiondiff=[(i-initialDiff) for i in positiondiff]
+#positiondiff=[(i-initialDiff) for i in positiondiff]
 
 #t_fft=t[0:int(len(t)/2.)]
 #positiondiff_fft=positiondiff[0:int(len(t)/2.)]
@@ -142,7 +146,7 @@ else:
 	#plt.ylim([toplim,bottomlim])
 	plt.tight_layout()
 		
-plt.savefig(pathf+"/NearestParticleDis"+str(sys.argv[2])+str(sys.argv[3])+".png")   
+plt.savefig(pathf+"/NearestParticleDis"+str(bottomPart)+str(upPart)+".png")   
 
 
 plt.show()
