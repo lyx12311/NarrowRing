@@ -37,8 +37,8 @@ def calcR(f,b,dis):
 	return (float(b)/float(f))**(2./3.)*dis
 
 Rdis = float(sys.argv[1]) # ring distance
-Ref = str(sys.argv[2]).split(':')[0]
-Reb = str(sys.argv[2]).split(':')[1]
+Ref = str(sys.argv[2]).split(':')[1]
+Reb = str(sys.argv[2]).split(':')[0]
 
 if 'x' in Ref:
 	Ref = [float(j) for j in [i+1 for i in range(10)]]
