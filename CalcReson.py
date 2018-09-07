@@ -58,8 +58,8 @@ for f in Ref:
 		if f==b:
 			continue
 		else:
-			DisU=calcR(f,b,Rdis)
-			print str(int(f))+":"+str(int(b))+" "+str(DisU)
+			DisU=calcR(b,f,Rdis)
+			print str(int(b))+":"+str(int(f))+" "+str(DisU)
 			Dis.append(DisU-0.02)
 
 print "Suggested starting positions are:"
