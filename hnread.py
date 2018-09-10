@@ -46,7 +46,6 @@ def hnread(filename,typename):
 				#print linest
 				data.append([float(j) for j in linest])
 				i=i+1
-		#print np.array(data)
 		return np.array(data)
 		
 	if typename == "body":
@@ -57,12 +56,9 @@ def hnread(filename,typename):
 			i=0
 			#print len(parts[17:-1])
 			for line in parts[17:len(parts)]:
-				#print line
 				linest=line.split()
-				#print linest
 				data.append([float(j) for j in linest])
 				i=i+1
-		#print np.array(data)
 		return np.array(data)
 	
 	if typename == "headerline":
@@ -88,12 +84,15 @@ def hnread(filename,typename):
 	elif typename == "stream":
 		with open(filename) as stf:
 			parts=stf.readlines()
-			numbP=parts[5].split()
-			return float(numbP[2])
+			for lines in parts:
+				if "N " in lines:
+					numbP_l=lines.split("=")[1].split(" ")
+					numbP_l=list(filter(None,numbP_l))
+					return float(numbP_l[0])
 		
 		
 	else:
-		print "typename not recognized!"
+		print "typename not recognized!" 
 		sys.exit(1)
 
 
