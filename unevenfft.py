@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# Author: Lucy Lu (last update 08/08/2018)
+# Author: Lucy Lu (last update 09/11/2018)
 # Contain functions: 
 #	unevenfft(filename,Fs,N) [uneven fft for state files]
 #		filename: file path
@@ -8,7 +8,8 @@
 #		N: number of peaks to find
 #		dub: how many times to duplicate data 
 #		opt: print out option (whether to print out highest peak amplitude (1) or not (0))
-#			example: unevenfft("state1.dat",1000,3,1) returns a plot marking the first 3 highest peaks and print out the amplitude
+#		output: output type, radial peaks (0), z peaks (1)
+#			example: unevenfft("state1.dat",1000,3,1,0) returns a plot marking the first 3 highest peaks and print out the peaks and the amplitude
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -31,7 +32,7 @@ from TimeGenerate import *
 # filename: file name 
 # Fs: pow many points to sample
 # N: number of peaks to find
-def unevenfft(filename,Fs,N,dub,opt):
+def unevenfft(filename,Fs,N,dub,opt,output):
 	data=hnread(filename,"state")
 	longtit=data[:,-3]+data[:,-2]
 	#print sorted(longtit)
@@ -140,7 +141,7 @@ def unevenfft(filename,Fs,N,dub,opt):
 	i=0
 	while i < Nc:
 		#print i
-		if sortedY[int(-2-i)] > bgn+100*bgn_e:
+		if sortedY[int(-2-i)] > bgn+10*bgn_e:
 			if len(fren)==0 and int(sortedFre[int(-2-i)]/float(dub+1))>1:
 				titlefre=titlefre+" "+str(int((sortedFre[int(-2-i)])/float(dub+1)))
 				fren.append(sortedFre[int(-2-i)]/float(dub+1))
@@ -161,8 +162,8 @@ def unevenfft(filename,Fs,N,dub,opt):
 	i=0
 	while i < Nc:
 		#print i
-		if sortedY_z[int(-2-i)] > bgn_z+100*bgn_e_z:
-			if len(fren_z)==0 and int(sortedFre_z[int(-2-i)]/float(dub+1))>1:
+		if sortedY_z[int(-2-i)] > bgn_z+10*bgn_e_z:
+			if len(fren_z)==0:
 				titlefre_z=titlefre_z+" "+str(int((sortedFre_z[int(-2-i)])/float(dub+1)))
 				fren_z.append(sortedFre_z[int(-2-i)]/float(dub+1))
 				i=i+1
@@ -181,15 +182,24 @@ def unevenfft(filename,Fs,N,dub,opt):
 	titlefre=titlefre+" in decreasing amplitude order"
 	titlefre_z=titlefre_z+" in decreasing amplitude order"
 	#print "title done"
+	
 	# only printing radial peaks
 	printtxt=" "
 	peakInt=" "
-	for num in range(N):
-		printtxt=printtxt+str(sortedY[-int(N+1)+num])+" "
-	
-	for num in range(N):
-		peakInt=peakInt+str(sortedFre[-int(N+1)+num]/float(dub+1))+" "
 	if opt!=0:
+		#print N
+		if output==0:
+			for num in range(N):
+			#	print -int(N)+num
+				printtxt=printtxt+str(sortedY[-int(N)+num])+" "
+			for num in range(N):
+				peakInt=peakInt+str(round(sortedFre[-int(N)+num]/float(dub+1)))+" "
+		elif output==1:
+			for num in range(N):
+			#	print -int(N)+num
+				printtxt=printtxt+str(sortedY_z[-int(N)+num])+" "
+			for num in range(N):
+				peakInt=peakInt+str(round(sortedFre_z[-int(N)+num]/float(dub+1)))+" "
 		print peakInt
 		print printtxt
 	
@@ -204,8 +214,11 @@ def unevenfft(filename,Fs,N,dub,opt):
 	ax[1].semilogy(frq/float(dub+1),abs(Y),'r') # plotting the spectrum
 	ax[1].plot(np.array(sortedFre[-int(N+1):-1])/float(dub+1),sortedY[-int(N+1):-1],'.')
 	ax[1].set_title(titlefre)
-	ax[1].set_xlim([1,max(frq)/float(dub+1)])
-	ax[1].set_ylim([1e-10,1e-1])
+	#ax[1].set_xlim([0.5,max(frq)/float(dub+1)])
+	ax[1].set_xlim([0.5,50])
+	#rangeY=sortedY[0]-sortedY[-1]
+	#ax[1].set_ylim([sortedY[0]+0.5*rangeY,sortedY[0]-0.1*rangeY])
+	ax[1].set_ylim([1e-15,1e-1])
 	ax[1].set_xlabel('Freq (1/degrees)')
 	ax[1].set_ylabel('|Y(freq)|')
 	
@@ -218,8 +231,11 @@ def unevenfft(filename,Fs,N,dub,opt):
 	ax[3].plot(np.array(sortedFre_z[-int(N+1):-1])/float(dub+1),sortedY_z[-int(N+1):-1],'.')
 	ax[3].set_title(titlefre_z)
 	ax[3].set_xlim([1,max(frq)/float(dub+1)])
-	ax[3].set_ylim([1e-11,1e-6])
-	ax[3].set_xlim([1,max(frq)/float(dub+1)])
+	#rangeY_z=sortedY_z[0]-sortedY_z[-1]
+	#ax[3].set_ylim([sortedY_z[0]+0.5*rangeY_z,sortedY_z[0]-0.1*rangeY_z])
+	ax[3].set_ylim([1e-15,1e-1])
+	#ax[3].set_xlim([0.5,max(frq)/float(dub+1)])
+	ax[3].set_xlim([0.5,50])
 	ax[3].set_xlabel('Freq (1/degrees)')
 	ax[3].set_ylabel('|Y_z(freq)|')
 	

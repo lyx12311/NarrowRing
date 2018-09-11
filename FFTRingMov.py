@@ -22,9 +22,9 @@ r2d = 57.2957795131
 
 def checkinput(argv):                                                                       
     programname = sys.argv[0]                                                               
-    if len(argv) != 2 and len(argv) != 3:  # Exit if not exactly one arguments  
+    if len(argv) != 3:  # Exit if not exactly one arguments  
     	print '---------------------------------------------------------------------------'                               
-        print "This program creates a movie of the fft of the ring vs time based on hnbody state files.\n It takes into the folder name as argument \n Add 0 to the end if you don't want output"
+        print "This program creates a movie of the fft of the ring vs time based on hnbody state files.\n It takes into two arguments: \n Argument 1: Folder name \n Argument 2: Output type -- no output (0), print out r peaks (r), print out z peaks (z)\n"
 	print ' '
 	print ' Example:    '+programname+' m1 0'  
 	print '---------------------------------------------------------------------------'                                    
@@ -35,19 +35,26 @@ def checkinput(argv):
         sys.exit(1)   
 
 checkinput(sys.argv)
-
-if len(sys.argv)==3:
-	outputInt=0
-else:
+outputInt = str(sys.argv[-1])
+if outputInt=='z':
+	print "z peak heights are"
+	Opt=1
 	outputInt=1
+elif outputInt=='r':
+	print "r peak heights are"
+	Opt=1
+	outputInt=0
+elif outputInt=='0':
+	Opt=0
+else:
+	print "output type not recognized!"
+	sys.exit(1)
 	
-if outputInt==1:
-	print "peak heights are"
 
 path=sys.argv[1] ## put second input into file 
 pathname=str(path)
 os.system("mkdir "+str(path)+"/pngfiles")
-if outputInt==0:
+if Opt==0:
 	print pathname
 if pathname[-1]=="/":
 	path=pathname[0:-1]
@@ -59,19 +66,20 @@ except:
 	except:
 		print "Can't find stream.in or stream2.in file"
 		sys.exit(1)
+print "number of particles: "+str(numbpart)
 #print numbpart
 # count files
 numfile=0
 for file in glob.glob(os.path.join(path,'state*.dat')):
 	numfile+=1
 	
-if outputInt==0:
+if Opt==0:
 	print "Total number of files: " +str(numfile)	
 numfilec=0
 for file in glob.glob(os.path.join(path,'state*.dat')):
 	numfilec+=1
 	#print file
-	if outputInt==0:
+	if Opt==0:
 		if int(float(numfilec)/numfile*100)-int(float(numfilec-1)/numfile*100)!=0:
 			print str(int(float(numfilec)/numfile*100))+"% done"
 	#print file
@@ -79,12 +87,13 @@ for file in glob.glob(os.path.join(path,'state*.dat')):
 	#print name
 	PNGName = str(name[-1])
 	try:
-		unevenfft(file,numbpart*10,10,10,outputInt)
+		unevenfft(file,numbpart*10,10,10,Opt,outputInt)
 		#print str(path)+"/pngfiles/"+PNGName+'.png'
 		plt.savefig(str(path)+"/pngfiles/"+PNGName+'.png')
 		plt.close()
-	except:
-		if outputInt==0:
+	except BaseException as e:
+		print e
+		if Opt==0:
 			print "Warning: Can't fft file "+str(file)
 		continue
 
@@ -102,4 +111,4 @@ else:
 	os.system("ffmpeg -framerate 10 -i "+ str(path)+"/pngfiles/state%d.dat.png -loglevel warning -pix_fmt yuv420p -y "+FolderName[-1]+".mp4")
 	os.system("mv "+FolderName[-1]+".mp4 "+str(path))
 
-#os.system("rm -rf "+str(path)+"/pngfiles")
+os.system("rm -rf "+str(path)+"/pngfiles")
