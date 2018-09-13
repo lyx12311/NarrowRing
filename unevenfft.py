@@ -162,7 +162,7 @@ def unevenfft(filename,Fs,N,dub,opt,output):
 	i=0
 	while i < Nc:
 		#print i
-		if sortedY_z[int(-2-i)] > bgn_z+10*bgn_e_z:
+		if sortedY_z[int(-2-i)] > bgn_z+10*bgn_e_z and int(sortedFre[int(-2-i)]/float(dub+1))>1:
 			if len(fren_z)==0:
 				titlefre_z=titlefre_z+" "+str(int((sortedFre_z[int(-2-i)])/float(dub+1)))
 				fren_z.append(sortedFre_z[int(-2-i)]/float(dub+1))
