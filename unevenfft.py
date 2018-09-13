@@ -28,6 +28,8 @@ import scipy.fftpack
 from hnread import *
 from center_angle import *
 from TimeGenerate import *
+import matplotlib.ticker as plticker
+
 # this function does uneven fft for state files
 # filename: file name 
 # Fs: pow many points to sample
@@ -142,7 +144,7 @@ def unevenfft(filename,Fs,N,dub,opt,output):
 	while i < Nc:
 		#print i
 		if sortedY[int(-2-i)] > bgn+10*bgn_e:
-			if len(fren)==0 and int(sortedFre[int(-2-i)]/float(dub+1))>1:
+			if len(fren)==0:
 				titlefre=titlefre+" "+str(int((sortedFre[int(-2-i)])/float(dub+1)))
 				fren.append(sortedFre[int(-2-i)]/float(dub+1))
 				i=i+1
@@ -221,6 +223,8 @@ def unevenfft(filename,Fs,N,dub,opt,output):
 	ax[1].set_ylim([1e-15,1e-1])
 	ax[1].set_xlabel('Freq (1/degrees)')
 	ax[1].set_ylabel('|Y(freq)|')
+	ax[1].set_xticks(np.arange(0,50,1))
+	ax[1].grid(True)
 	
 	ax[2].plot(longtit_center,z,'o',t_int,z_int,'-')
 	ax[2].set_xlim([0,360])
@@ -238,7 +242,8 @@ def unevenfft(filename,Fs,N,dub,opt,output):
 	ax[3].set_xlim([0.5,50])
 	ax[3].set_xlabel('Freq (1/degrees)')
 	ax[3].set_ylabel('|Y_z(freq)|')
-	
+	ax[3].set_xticks(np.arange(0,50,1))
+	ax[3].grid(True)
 	#fig.tight_layout()
 
 #unevenfft("state14.dat",1000)
