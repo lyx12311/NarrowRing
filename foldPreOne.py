@@ -77,13 +77,15 @@ for fpath in fn:
 	
 plt.xlabel('Time [yr]')
 plt.ylabel('Longtitude of pericenter [degrees]')
-plt.legend(loc='upper left')
+plt.ylim([-1,5])
+#plt.legend(loc='upper left')
 plt.savefig('TimevsLP_onepart.png')
 
 
 plt.figure()
 plt.plot(Mn,pers,'ro')
-plt.xlabel('Mode Number [yr]')
+plt.xlabel('Mode Number')
+plt.ylim([-1,5])
 plt.ylabel('Precession in 5 Years [degrees]')
 plt.savefig('TimevsLP_onepart_sum.png')
 
