@@ -50,6 +50,8 @@ if pathname[-1]=="/":
 
 fn=[x[0] for x in os.walk(pathf)]
 fn=fn[1:len(fn)]
+pers=[]
+Mn=[]
 print fn
 
 plt.figure()
@@ -67,10 +69,22 @@ for fpath in fn:
 	zippedData.sort()
 	tp_s,L_s=zip(*zippedData)
 
-	plt.plot(tp_s,L_s-L_s[0],label=fpath.split('/')[-1])
+	plt.plot(tp_s,L_s-L_s[0],label= "M = "+str(int(fpath.split('/')[-1])-1))
+	pers.append(L_s[-1]-L_s[0])
+	Mn.append(int(fpath.split('/')[-1])-1)
+	
+	
 	
 plt.xlabel('Time [yr]')
 plt.ylabel('Longtitude of pericenter [degrees]')
 plt.legend(loc='upper left')
 plt.savefig('TimevsLP_onepart.png')
+
+
+plt.figure()
+plt.plot(Mn,Pers)
+plt.xlabel('Mode Number [yr]')
+plt.ylabel('Precession in 5 Years [degrees]')
+plt.savefig('TimevsLP_onepart_sum.png')
+
 plt.show()
