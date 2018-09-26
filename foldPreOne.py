@@ -82,7 +82,7 @@ plt.savefig('TimevsLP_onepart.png')
 
 
 plt.figure()
-plt.plot(Mn,pers)
+plt.plot(Mn,pers,'ro')
 plt.xlabel('Mode Number [yr]')
 plt.ylabel('Precession in 5 Years [degrees]')
 plt.savefig('TimevsLP_onepart_sum.png')
