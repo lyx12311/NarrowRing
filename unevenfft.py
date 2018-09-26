@@ -28,27 +28,33 @@ import scipy.fftpack
 from hnread import *
 from center_angle import *
 from TimeGenerate import *
+from getEle import *
+from chkEle import *
 import matplotlib.ticker as plticker
+
 
 # this function does uneven fft for state files
 # filename: file name 
 # Fs: pow many points to sample
 # N: number of peaks to find
 def unevenfft(filename,Fs,N,dub,opt,output):
-	data=hnread(filename,"state")
-	longtit=data[:,-3]+data[:,-2]
-	#print sorted(longtit)
+	
+	a=getEle(filename,'a')
+	cw = getEle(filename,'cw')
+	longtit=cw+getEle(filename,'M')
 	longtit_center=np.array([center_angle(i,0,360) for i in longtit])
 	longtit_or=longtit_center
+	e = getEle(filename,'e')
+	nu = getEle(filename,'nu')
+	i = getEle(filename,'i')
+	W = getEle(filename,'W')
+	tvec = getEle(filename,'t')
+	t=tvec[0]
 	
-	r=[calc_r(data[i,1],data[i,2],data[i,-1]) for i in range(len(longtit))]
-	z=[calc_z(data[i,1],data[i,2],data[i,3],data[i,5],data[i,-1],data[i,4]) for i in range(len(longtit))]
+	r = a*(1.-e*e)/(1.+e*np.cos(nu*d2r))
+	z = a*(1.-e*e)/(1.+e*np.cos(nu*d2r))*np.sin(i*d2r)*np.sin((cw-W+nu)*d2r)
 	r_or=r
 	z_or=z
-	#r=np.cos(5*np.pi*longtit_center/2)
-	#r=np.sin(2*np.pi*5.*np.array(longtit_center)/100)
-	
-	t=data[0,0]
 	
 	longtit_center, r, z = zip(*sorted(zip(longtit_center, r, z)))
 	
