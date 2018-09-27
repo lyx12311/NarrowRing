@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 ##### !/usr/local/bin/python
 ##### !/usr/bin/python # for DPH mac
+###### last updated by Lucy Lu Sep27, 2018
 import numpy as np
 import math
 import os
@@ -22,7 +23,7 @@ def checkinput(argv):
     programname = sys.argv[0]                                                               
     if len(argv) != 4:  # Exit if not exactly one arguments  
     	print '---------------------------------------------------------------------------'                               
-        print "This program plots sample particle element vs time for a ring based on hnbody body files.\n It takes into 3 arguments:\n Argument 1: the folder name\n Argument 2: element to plot ('a','e','i',etc.. [see chkEle.py for more info])\n Argument 3: how many particles to plot\n"
+        print "This program plots sample particle element vs time for a ring based on hnbody body files.\n It takes into 3 arguments:\n Argument 1: the folder name\n Argument 2: element to plot ('a','e','i',etc.. [see chkEle.py for more info]. You can also put in 'r' or 'z')\n Argument 3: how many particles to plot\n"
 	print ' '
 	print ' Example:    '+programname+' m1 e 10'  
 	print '---------------------------------------------------------------------------'                                    
@@ -111,13 +112,26 @@ else:
 #print subplotNumC
 
 #print subplotNum
-fig, axes = plt.subplots(nrows=subplotNumR, ncols=subplotNumC,figsize=(realN, realN/(float(subplotNumC)/float(subplotNumR))))
+fig, axes = plt.subplots(nrows=subplotNumR, ncols=subplotNumC,figsize=(1.3*realN, 1.3*realN/(float(subplotNumC)/float(subplotNumR))))
 subplotnumber=1
 for file in filetp:
 	plt.subplot(subplotNumR,subplotNumC,subplotnumber)
 	#print getEle(file,"t")
-	
-	plt.plot(getEle(file,"t"),getEle(file,elem))
+	if elem=='r':
+		a = getEle(file,'a')
+		e = getEle(file,'e')
+		nu = getEle(file,'nu')
+		plt.plot(getEle(file,"t"),a*(1.-e*e)/(1.+e*np.cos(nu*d2r)))
+	elif elem=='z':
+		a = getEle(file,'a')
+		e = getEle(file,'e')
+		cw = getEle(file,'cw')
+		nu = getEle(file,'nu')
+		i = getEle(file,'i')
+		W = getEle(file,'W')
+		plt.plot(getEle(file,"t"),a*(1.-e*e)/(1.+e*np.cos(nu*d2r))*np.sin(i*d2r)*np.sin((cw-W+nu)*d2r))
+	else:
+		plt.plot(getEle(file,"t"),getEle(file,elem))
 	plt.xlabel('Time [yr]')
 	plt.ylabel(str(sys.argv[2])+str(filenp[subplotnumber-1]))
 	#print subplotnumber
