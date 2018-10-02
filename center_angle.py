@@ -36,12 +36,9 @@ def center_angle(x,minc,maxc):
 	if x >= minc and x <= maxc:
 		remain = x
 	else:
-		rangex = maxc-minc
-		if x < 0:
-			remain = x + math.ceil(abs(x)/rangex)*rangex
-			#print x
-		else:
-#			rescale = (x)/rangex
-#			remain = (rescale-int(rescale))*rangex
-			remain = x - math.ceil(abs(x)/rangex)*rangex
+		rangex = float(maxc)-float(minc)
+		if x < minc:
+			remain = x + abs(math.ceil((minc-x)/rangex)*rangex)
+		elif x > maxc:
+			remain = x - abs(math.ceil((x-maxc)/rangex)*rangex)
 	return remain
