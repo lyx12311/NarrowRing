@@ -50,42 +50,52 @@ if pathname[-1]=="/":
 
 fn=[x[0] for x in os.walk(pathf)]
 fn=fn[1:len(fn)]
+#print fn
 pers=[]
 Mn=[]
-print fn
+NP=[]
 
 plt.figure()
 for fpath in fn:
-	for file in glob.glob(os.path.join(fpath,'body1.dat')):
-		# get closest of last particle from state1.dat files
-		lpend=hnread(file,"body")
-		r_end=lpend[:,1]*(1.-lpend[:,2]*lpend[:,2])/(1+lpend[:,2]*np.cos(lpend[:,-1]*d2r))
-		#LongTit = lpend[:,-2]+lpend[:,-3]
-		LongTit = lpend[:,-3]
-		LongTit_cent=[(center_angle(i,-180.,180.)) for i in LongTit]
-		timeplt=lpend[:,0]
+	try:
+		for streamf in glob.glob(os.path.join(fpath,'stream*')):
+			NP.append(hnread(streamf,"stream"))
+			break
+		for file in glob.glob(os.path.join(fpath,'body1.dat')):
+			# get closest of last particle from state1.dat files
+			lpend=hnread(file,"body")
+			r_end=lpend[:,1]*(1.-lpend[:,2]*lpend[:,2])/(1+lpend[:,2]*np.cos(lpend[:,-1]*d2r))
+			#LongTit = lpend[:,-2]+lpend[:,-3]
+			LongTit = lpend[:,-3]
+			LongTit_cent=[(center_angle(i,-180.,180.)) for i in LongTit]
+			#print "this is lpend[]"+str(lpend[:,0])
+			timeplt=lpend[:,0]
 
-	zippedData=zip(timeplt,LongTit_cent)
-	zippedData.sort()
-	tp_s,L_s=zip(*zippedData)
+		zippedData=zip(timeplt,LongTit_cent)
+		zippedData.sort()
+		tp_s,L_s=zip(*zippedData)
 
-	plt.plot(tp_s,L_s-L_s[0],label= "M = "+str(int(fpath.split('/')[-1])-1))
-	pers.append(L_s[-1]-L_s[0])
-	Mn.append(int(fpath.split('/')[-1])-1)
+		plt.plot(tp_s,L_s-L_s[0],label= "M = "+str(int(fpath.split('/')[-1])-1))
+		pers.append(L_s[-1]-L_s[0])
+		Mn.append(int(fpath.split('/')[-1])-1)
+	except BaseException as e:
+		print e
+		continue
 	
-	
-	
+#print Mn
+#print pers	
 plt.xlabel('Time [yr]')
 plt.ylabel('Longtitude of pericenter [degrees]')
-plt.ylim([-1,5])
+plt.ylim([-20,120])
 #plt.legend(loc='upper left')
 plt.savefig('TimevsLP_onepart.png')
 
 
 plt.figure()
-plt.plot(Mn,pers,'ro')
+plotScatter(NP,Mn,[center_angle(i,-180,180) for i in pers],"Number of Particles",'o',"line")
+#plt.plot(Mn,[center_angle(i,-180,180) for i in pers],'ro')
 plt.xlabel('Mode Number')
-plt.ylim([-1,5])
+#plt.ylim([-20,120])
 plt.ylabel('Precession in 5 Years [degrees]')
 plt.savefig('TimevsLP_onepart_sum.png')
 
