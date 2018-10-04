@@ -18,14 +18,18 @@ from plotScatter import *
 d2r = 0.01745329251
 r2d = 57.2957795131
 
+titletype={"PN":"Particle Numbers","NN":"Nearest Neighbors"}
+sorttype={"PN":"stream","NN":"user"}
+filenametype={"PN":"stream*","NN":"user.in"}
+
 # check command line arguments 
 def checkinput(argv):                                                                       
     programname = sys.argv[0]                                                               
-    if len(argv) != 2:  # Exit if not exactly one arguments  
+    if len(argv) != 3:  # Exit if not exactly one arguments  
     	print '---------------------------------------------------------------------------'                               
-        print 'This program plots time vs pericenter longtitude to check precession in one folder. \n It takes into one arguments to be the run directory.'
+        print 'This program plots time vs pericenter longtitude to check precession in one folder. \n It takes into two arguments:\n Argument 1: Run directory.\n Argument 2: sort by particle numbers ("NP"), Nearest neighbors ("NN").'
 	print ' '
-	print ' Example:    '+programname+' ./' 
+	print ' Example:    '+programname+' ./ NN' 
 	print '---------------------------------------------------------------------------'                                    
         sys.exit(1)                                                                         
     gridfile = argv[1]                                                                                                                                    
@@ -35,13 +39,7 @@ def checkinput(argv):
 checkinput(sys.argv)
 
 pathf=sys.argv[1] ## put second input into file 
-
-try:
-	trueAnomolyLim=[float(sys.argv[2]),float(sys.argv[3])]
-	limNo=1
-except:
-	print "No limit for plotting"
-	limNo=2
+sortby=sys.argv[2]
 	
 pathname=str(pathf)
 #print pathname
@@ -75,8 +73,8 @@ for fpath in fn:
 		plt.plot(tp_s,L_s-L_s[0],label= "M = "+str(int(fpath.split('/')[-1])-1))
 		pers.append(L_s[-1]-L_s[0])
 		Mn.append(int(fpath.split('/')[-1])-1)
-		for streamf in glob.glob(os.path.join(fpath,'stream*')):
-			NP.append(hnread(streamf,"stream"))
+		for streamf in glob.glob(os.path.join(fpath,filenametype[sortby])):
+			NP.append(hnread(streamf,sorttype[sortby]))
 			break
 	except BaseException as e:
 		print e
@@ -130,7 +128,7 @@ plt.legend()
 plt.figure()
 for i in range(k):
 	#print i
-	plt.plot(Mnf[i][:],[ (persf[i][j]-persf[-1][j]) for j in range(len(persf[i]))],'o',label="particle number = "+str(NPf[i][0]))
+	plt.plot(Mnf[i][:],[ (persf[i][j]-persf[-1][j]) for j in range(len(persf[i]))],'o',label=titletype[sortby]+ " = "+str(NPf[i][0]))
 	#plt.plot(Mnf[i][:],persf[i][:])
 plt.xlabel('Mode Number')
 plt.ylabel('Precession in 5 Years percentage error [degrees]')
