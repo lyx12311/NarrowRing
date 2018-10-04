@@ -15,17 +15,21 @@ from hnread import *
 from center_angle import *
 from plotScatter import *
 
+titletype={"PN":"Particle Numbers","NN":"Nearest Neighbors"}
+sorttype={"PN":"stream","NN":"user"}
+filenametype={"PN":"stream*","NN":"user.in"}
+
 d2r = 0.01745329251
 r2d = 57.2957795131
 
 # check command line arguments 
 def checkinput(argv):                                                                       
     programname = sys.argv[0]                                                               
-    if len(argv) != 2:  # Exit if not exactly one arguments  
+    if len(argv) != 3:  # Exit if not exactly one arguments  
     	print '---------------------------------------------------------------------------'                               
-        print 'This program plots time vs pericenter longtitude to check precession in one folder. \n It takes into one arguments to be the run directory.'
+        print 'This program plots time vs pericenter longtitude to check precession in one folder. \n It takes into two arguments:\n Argument 1: Run directory.\n Argument 2: sort by particle numbers ("NP"), Nearest neighbors ("NN")'
 	print ' '
-	print ' Example:    '+programname+' ./' 
+	print ' Example:    '+programname+' ./ NN' 
 	print '---------------------------------------------------------------------------'                                    
         sys.exit(1)                                                                         
     gridfile = argv[1]                                                                                                                                    
@@ -35,6 +39,7 @@ def checkinput(argv):
 checkinput(sys.argv)
 
 pathf=sys.argv[1] ## put second input into file 
+sortby=sys.argv[2]
 
 try:
 	trueAnomolyLim=[float(sys.argv[2]),float(sys.argv[3])]
@@ -50,10 +55,12 @@ if pathname[-1]=="/":
 
 fn=[x[0] for x in os.walk(pathf)]
 fn=fn[1:len(fn)]
-print fn
+#print fn
 pers=[]
 Mn=[]
 NP=[]
+
+print titletype[sortby]+"      Mode numbers      precession [degrees]"
 
 plt.figure()
 for fpath in fn:
@@ -73,11 +80,15 @@ for fpath in fn:
 		tp_s,L_s=zip(*zippedData)
 
 		plt.plot(tp_s,L_s-L_s[0],label= "M = "+str(int(fpath.split('/')[-1])-1))
-		pers.append(L_s[-1]-L_s[0])
-		Mn.append(int(fpath.split('/')[-1])-1)
-		for streamf in glob.glob(os.path.join(fpath,'stream*')):
-			NP.append(hnread(streamf,"stream"))
+		pers1=L_s[-1]-L_s[0]
+		pers.append(pers1)
+		Mn1=int(fpath.split('/')[-1])-1
+		Mn.append(Mn1)
+		for streamf in glob.glob(os.path.join(fpath,filenametype[sortby])):
+			NP1=hnread(streamf,sorttype[sortby])
+			NP.append(NP1)
 			break
+		print str(NP1)+"      "+str(Mn1)+"      "+str(pers1)
 	except BaseException as e:
 		print e
 		continue
@@ -91,7 +102,7 @@ plt.ylim([-20,120])
 plt.savefig('TimevsLP_onepart.png')
 
 
-plotScatter(NP,Mn,[center_angle(i,-180,180) for i in pers],"Number of Particles",'o',"line")
+plotScatter(NP,Mn,[center_angle(i,-180,180) for i in pers],titletype[sortby],'o',"line")
 #plt.plot(Mn,[center_angle(i,-180,180) for i in pers],'ro')
 plt.xlabel('Mode Number')
 #plt.ylim([-20,120])
