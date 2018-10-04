@@ -40,13 +40,6 @@ checkinput(sys.argv)
 
 pathf=sys.argv[1] ## put second input into file 
 sortby=sys.argv[2]
-
-try:
-	trueAnomolyLim=[float(sys.argv[2]),float(sys.argv[3])]
-	limNo=1
-except:
-	print "No limit for plotting"
-	limNo=2
 	
 pathname=str(pathf)
 #print pathname
