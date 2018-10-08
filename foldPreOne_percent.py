@@ -118,10 +118,10 @@ persf=np.asarray(persf)
 plt.figure()
 for i in range(k):
 	#print i
-	plt.plot(Mnf[i][:],[ (persf[i][j]-persf[-1][j])/persf[-1][j] for j in range(len(persf[i]))],'o',label="particle number = "+str(NPf[i][0]))
+	plt.plot(Mnf[i][:],[ (persf[i][j]-persf[-1][j])/persf[-1][j]*100. for j in range(len(persf[i]))],'o',label="particle number = "+str(NPf[i][0]))
 	#plt.plot(Mnf[i][:],persf[i][:])
 plt.xlabel('Mode Number')
-plt.ylabel('Precession in 5 Years percentage error')
+plt.ylabel('Precession in 5 Years percentage error [%]')
 plt.savefig('TimevsLP_onepart_sum_percent.png')
 plt.legend()
 	
@@ -131,7 +131,7 @@ for i in range(k):
 	plt.plot(Mnf[i][:],[ (persf[i][j]-persf[-1][j]) for j in range(len(persf[i]))],'o',label=titletype[sortby]+ " = "+str(NPf[i][0]))
 	#plt.plot(Mnf[i][:],persf[i][:])
 plt.xlabel('Mode Number')
-plt.ylabel('Precession in 5 Years percentage error [degrees]')
+plt.ylabel('Precession in 5 Years error [degrees]')
 plt.savefig('TimevsLP_onepart_sum_diff.png')
 plt.legend()		
 
