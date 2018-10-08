@@ -64,7 +64,7 @@ for fpath in fn:
 			r_end=lpend[:,1]*(1.-lpend[:,2]*lpend[:,2])/(1+lpend[:,2]*np.cos(lpend[:,-1]*d2r))
 			#LongTit = lpend[:,-2]+lpend[:,-3]
 			LongTit = lpend[:,-3]
-			LongTit_cent=[(center_angle(i,-180.,180.)) for i in LongTit]
+			LongTit_cent=[(center_angle(i,0,360)) for i in LongTit]
 			#print "this is lpend[]"+str(lpend[:,0])
 			timeplt=lpend[:,0]
 
@@ -95,7 +95,7 @@ plt.ylim([-20,120])
 plt.savefig('TimevsLP_onepart.png')
 
 
-plotScatter(NP,Mn,[center_angle(i,-180,180) for i in pers],titletype[sortby],'o',"line")
+plotScatter(NP,Mn,[center_angle(i,0,360) for i in pers],titletype[sortby],'o',"line")
 #plt.plot(Mn,[center_angle(i,-180,180) for i in pers],'ro')
 plt.xlabel('Mode Number')
 #plt.ylim([-20,120])
