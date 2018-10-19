@@ -64,7 +64,7 @@ for fpath in fn:
 			r_end=lpend[:,1]*(1.-lpend[:,2]*lpend[:,2])/(1+lpend[:,2]*np.cos(lpend[:,-1]*d2r))
 			#LongTit = lpend[:,-2]+lpend[:,-3]
 			LongTit = lpend[:,-3]
-			LongTit_cent=[(center_angle(i,0,360)) for i in LongTit]
+			LongTit_cent=[(center_angle(i,-1,359)) for i in LongTit]
 			#print "this is lpend[]"+str(lpend[:,0])
 			timeplt=lpend[:,0]
 
@@ -81,7 +81,7 @@ for fpath in fn:
 			NP1=hnread(streamf,sorttype[sortby])
 			NP.append(NP1)
 			break
-		print str(NP1)+"      "+str(Mn1)+"      "+str(pers1)
+		print str(NP1)+"      "+str(Mn1)+"      "+str(center_angle(pers1,-1.,359.))
 	except BaseException as e:
 		print e
 		continue
