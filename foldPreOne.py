@@ -18,6 +18,7 @@ from plotScatter import *
 titletype={"PN":"Particle Numbers","NN":"Nearest Neighbors"}
 sorttype={"PN":"stream","NN":"user"}
 filenametype={"PN":"stream*","NN":"user.in"}
+prectype={"W":[-4,-180,180,'Longtitude of Ascending Node [degrees]'],"w":[-3,0,360,'Longtitude of Pericenter [degrees]']}
 
 d2r = 0.01745329251
 r2d = 57.2957795131
@@ -25,11 +26,11 @@ r2d = 57.2957795131
 # check command line arguments 
 def checkinput(argv):                                                                       
     programname = sys.argv[0]                                                               
-    if len(argv) != 3:  # Exit if not exactly one arguments  
+    if len(argv) != 4:  # Exit if not exactly one arguments  
     	print '---------------------------------------------------------------------------'                               
-        print 'This program plots time vs pericenter longtitude to check precession in one folder. \n It takes into two arguments:\n Argument 1: Run directory.\n Argument 2: sort by particle numbers ("NP"), Nearest neighbors ("NN")'
+        print 'This program plots time vs pericenter longtitude to check precession in one folder. \n It takes into 3 arguments:\n Argument 1: Run directory.\n Argument 2: sort by particle numbers ("NP"), Nearest neighbors ("NN")\n Argument 3: pericenter precession ("w") or nodal precession ("W").'
 	print ' '
-	print ' Example:    '+programname+' ./ NN' 
+	print ' Example:    '+programname+' ./ NN w' 
 	print '---------------------------------------------------------------------------'                                    
         sys.exit(1)                                                                         
     gridfile = argv[1]                                                                                                                                    
@@ -40,7 +41,7 @@ checkinput(sys.argv)
 
 pathf=sys.argv[1] ## put second input into file 
 sortby=sys.argv[2]
-	
+wW=sys.argv[3]
 pathname=str(pathf)
 #print pathname
 if pathname[-1]=="/":
@@ -52,7 +53,7 @@ fn=fn[1:len(fn)]
 pers=[]
 Mn=[]
 NP=[]
-
+print prectype[wW][0]
 print titletype[sortby]+"      Mode numbers      precession [degrees]"
 
 plt.figure()
@@ -62,17 +63,16 @@ for fpath in fn:
 			# get closest of last particle from state1.dat files
 			lpend=hnread(file,"body")
 			r_end=lpend[:,1]*(1.-lpend[:,2]*lpend[:,2])/(1+lpend[:,2]*np.cos(lpend[:,-1]*d2r))
-			#LongTit = lpend[:,-2]+lpend[:,-3]
-			LongTit = lpend[:,-3]
-			LongTit_cent=[(center_angle(i,-1,359)) for i in LongTit]
-			#print "this is lpend[]"+str(lpend[:,0])
+			LongTit = lpend[:,prectype[wW][0]]
+			LongTit_cent=[(center_angle(i,prectype[wW][1],prectype[wW][2])) for i in LongTit]
 			timeplt=lpend[:,0]
 
 		zippedData=zip(timeplt,LongTit_cent)
 		zippedData.sort()
 		tp_s,L_s=zip(*zippedData)
 
-		plt.plot(tp_s,L_s-L_s[0],label= "M = "+str(int(fpath.split('/')[-1])-1))
+		plt.plot(tp_s,[center_angle(i,prectype[wW][1]-1,prectype[wW][2]-1) for i in (L_s-L_s[0])],label= "M = "+str(int(fpath.split('/')[-1])-1))
+		plt.legend(loc=3)
 		pers1=L_s[-1]-L_s[0]
 		pers.append(pers1)
 		Mn1=int(fpath.split('/')[-1])-1
@@ -81,7 +81,7 @@ for fpath in fn:
 			NP1=hnread(streamf,sorttype[sortby])
 			NP.append(NP1)
 			break
-		print str(NP1)+"      "+str(Mn1)+"      "+str(center_angle(pers1,-1.,359.))
+		print str(NP1)+"      "+str(Mn1)+"      "+str(center_angle(pers1,prectype[wW][1]-1,prectype[wW][2]-1))
 	except BaseException as e:
 		print e
 		continue
@@ -89,16 +89,15 @@ for fpath in fn:
 #print Mn
 #print pers	
 plt.xlabel('Time [yr]')
-plt.ylabel('Longtitude of pericenter [degrees]')
-plt.ylim([-20,120])
-#plt.legend(loc='upper left')
+plt.ylabel(prectype[wW][3])
+#plt.ylim([-20,120])
+plt.legend(loc=3)
 plt.savefig('TimevsLP_onepart.png')
 
 
-plotScatter(NP,Mn,[center_angle(i,0,360) for i in pers],titletype[sortby],'o',"line")
-#plt.plot(Mn,[center_angle(i,-180,180) for i in pers],'ro')
+plotScatter(NP,Mn,[center_angle(i,prectype[wW][1],prectype[wW][2]) for i in pers],titletype[sortby],'o',"line")
 plt.xlabel('Mode Number')
-#plt.ylim([-20,120])
+plt.legend(loc=2)
 plt.ylabel('Precession in 5 Years [degrees]')
 plt.savefig('TimevsLP_onepart_sum.png')
 

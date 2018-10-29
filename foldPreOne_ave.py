@@ -15,13 +15,13 @@ from hnread import *
 from center_angle import *
 from plotScatter import *
 
-d2r = 0.01745329251
-r2d = 57.2957795131
-
 titletype={"PN":"Particle Numbers","NN":"Nearest Neighbors"}
 sorttype={"PN":"stream","NN":"user"}
 filenametype={"PN":"stream*","NN":"user.in"}
 prectype={"W":[-4,-180,180,'Longtitude of Ascending Node [degrees]'],"w":[-3,0,360,'Longtitude of Pericenter [degrees]']}
+
+d2r = 0.01745329251
+r2d = 57.2957795131
 
 # check command line arguments 
 def checkinput(argv):                                                                       
@@ -47,93 +47,54 @@ pathname=str(pathf)
 if pathname[-1]=="/":
 	pathf=pathname[0:-1]
 
+print('getting folders')
 fn=[x[0] for x in os.walk(pathf)]
 fn=fn[1:len(fn)]
 #print fn
-pers=[]
 Mn=[]
 NP=[]
 
-plt.figure()
+print titletype[sortby]+"      Mode numbers      precession [degrees]"
+prec_ave=[]
+#plt.figure()
 for fpath in fn:
+	pers=[]
 	try:
-		for file in glob.glob(os.path.join(fpath,'body1.dat')):
+		for file in glob.glob(os.path.join(fpath,'body*.dat')):
+			if file.split('/')[-1]=='body0.dat':
+				continue
+			#print(file)
 			# get closest of last particle from state1.dat files
 			lpend=hnread(file,"body")
 			r_end=lpend[:,1]*(1.-lpend[:,2]*lpend[:,2])/(1+lpend[:,2]*np.cos(lpend[:,-1]*d2r))
 			LongTit = lpend[:,prectype[wW][0]]
-			LongTit_cent=[(center_angle(i,prectype[wW][1],prectype[wW][2])) for i in LongTit]
+			LongTit_cent=[(center_angle(i,-180,180)) for i in LongTit]
 			timeplt=lpend[:,0]
 
-		zippedData=zip(timeplt,LongTit_cent)
-		zippedData.sort()
-		tp_s,L_s=zip(*zippedData)
+			zippedData=zip(timeplt,LongTit_cent)
+			zippedData.sort()
+			tp_s,L_s=zip(*zippedData)
 
-		plt.plot(tp_s,[(center_angle(i,prectype[wW][1]-1,prectype[wW][2]-1)) for i in (L_s-L_s[0])],label= "M = "+str(int(fpath.split('/')[-1])-1))
-		pers.append(L_s[-1]-L_s[0])
-		Mn.append(int(fpath.split('/')[-1])-1)
+			pers1=L_s[-1]-L_s[1]
+			pers.append(center_angle(pers1,-180,180))
+		printper=np.array(pers).mean()
+		prec_ave.append(printper)
+		Mn1=int(fpath.split('/')[-1])-1
+		Mn.append(Mn1)
 		for streamf in glob.glob(os.path.join(fpath,filenametype[sortby])):
-			NP.append(hnread(streamf,sorttype[sortby]))
+			NP1=hnread(streamf,sorttype[sortby])
+			NP.append(NP1)
 			break
+		print str(NP1)+"      "+str(Mn1)+"      "+str(center_angle(printper,prectype[wW][1]-0.5,prectype[wW][2]-0.5))
 	except BaseException as e:
 		print e
 		continue
 	
-#print len(NP)
-#print len(Mn)
-#print len(pers)	
-#print "sorting"	
-NP,Mn,pers=zip(*sorted(zip(NP,Mn,[center_angle(i,prectype[wW][1]-1,prectype[wW][2]-1) for i in pers])))
-NPf=[[]]
-Mnf=[[]]
-persf=[[]]
-k=0
-for i in range(len(NP)):
-	if i==0:
-		NPf[k].append(NP[i])
-		Mnf[k].append(Mn[i])
-		persf[k].append(pers[i])
-	else:
-		if NP[i]==NP[i-1]:
-			NPf[k].append(NP[i])
-			Mnf[k].append(Mn[i])
-			persf[k].append(pers[i])
-		else:
-			k=k+1
-			NPf.append([])
-			Mnf.append([])
-			persf.append([])
-			NPf[k].append(NP[i])
-			Mnf[k].append(Mn[i])
-			persf[k].append(pers[i])
 
-NPf=np.asarray(NPf)
-Mnf=np.asarray(Mnf)
-persf=np.asarray(persf)	
-#print NPf
-#print Mnf
-#print persf	
-#print k
-plt.figure()
-for i in range(k+1):
-	#print i
-	plt.plot(Mnf[i][:],[ (persf[i][j]-persf[-1][j])/persf[-1][j] for j in range(len(persf[i]))],'-o',label=titletype[sortby]+ " = "+str(NPf[i][0]))
-	#plt.plot(Mnf[i][:],persf[i][:])
+plotScatter(NP,Mn,[center_angle(i,prectype[wW][1]-0.5,prectype[wW][2]-0.5) for i in prec_ave],titletype[sortby],'o',"line")
 plt.xlabel('Mode Number')
-plt.ylabel('Precession in 5 Years percentage error')
-plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.05),
-          ncol=3, fancybox=True, shadow=True)
-plt.savefig('TimevsLP_onepart_sum_percent.png')
-	
-plt.figure()
-for i in range(k+1):
-	#print i
-	plt.plot(Mnf[i][:],[ (persf[i][j]-persf[-1][j]) for j in range(len(persf[i]))],'-o',label=titletype[sortby]+ " = "+str(NPf[i][0]))
-	#plt.plot(Mnf[i][:],persf[i][:])
-plt.xlabel('Mode Number')
-plt.ylabel('Precession in 5 Years error [degrees]')
-plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.05),
-          ncol=3, fancybox=True, shadow=True)	
-plt.savefig('TimevsLP_onepart_sum_diff.png')	
+plt.legend(loc=2)
+plt.ylabel('Precession in 5 Years [degrees]')
+plt.savefig('TimevsLP_onepart_sum.png')
 
 plt.show()
