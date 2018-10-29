@@ -26,7 +26,7 @@ prectype={"W":[-4,-180,180,'Longtitude of Ascending Node [degrees]'],"w":[-3,0,3
 # check command line arguments 
 def checkinput(argv):                                                                       
     programname = sys.argv[0]                                                               
-    if len(argv) != 3:  # Exit if not exactly one arguments  
+    if len(argv) != 4:  # Exit if not exactly one arguments  
     	print '---------------------------------------------------------------------------'                               
         print 'This program plots time vs pericenter longtitude to check precession in one folder. \n It takes into 3 arguments:\n Argument 1: Run directory.\n Argument 2: sort by particle numbers ("NP"), Nearest neighbors ("NN").\n Argument 3: pericenter precession ("w") or nodal precession ("W").'
 	print ' '
