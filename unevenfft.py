@@ -132,6 +132,8 @@ def unevenfft(filename,Fs,N,dub,opt,output):
 	sortedY_z,sortedFre_z=zip(*sorted(zip(abs(Y_z),frq)))
 	titlefre='Peaks are at frequency:'
 	titlefre_z='Peaks are at frequency:'
+	titlefile=' '
+	titlefile_z=' '
 	fren=[]
 	fren_z=[]
 	
@@ -147,54 +149,84 @@ def unevenfft(filename,Fs,N,dub,opt,output):
 	#print bgn_e
 	#print sortedY
 	i=0
-	while i < Nc:
-		#print i
-		if sortedY[int(-2-i)] > bgn+10*bgn_e:
-			if len(fren)==0:
-				titlefre=titlefre+" "+str(int((sortedFre[int(-2-i)])/float(dub+1)))
-				fren.append(sortedFre[int(-2-i)]/float(dub+1))
-				i=i+1
-				
-			elif sum( [int((sortedFre[int(-2-i)])/float(dub+1))==int(j) for j in fren])==0 and int(sortedFre[int(-2-i)]/float(dub+1))>1:
-				titlefre=titlefre+" "+str(int((sortedFre[int(-2-i)])/float(dub+1)))
-				fren.append(sortedFre[int(-2-i)]/float(dub+1))
-				i=i+1
-			else:
-				Nc=Nc+1
-				i=i+1
-				
-		else:
+	j=0
+	Yapl=[]
+	while True:
+		if j>Nc:
 			break
+		#print i
+		if sortedY[int(-2-i)] > bgn:
+			if len(fren)==0:
+				titlefile=titlefile+" "+str(int((sortedFre[int(-2-i)])/float(dub+1)))
+				fren.append(sortedFre[int(-2-i)]/float(dub+1))
+				Yapl.append(sortedY[int(-2-i)])
+				i=i+1
+				j=j+1
+				if i>len(sortedFre)-5:
+					break
+			elif sum( [int((sortedFre[int(-2-i)])/float(dub+1))==int(j) for j in fren])==0 and int(sortedFre[int(-2-i)]/float(dub+1))>1:
+				titlefile=titlefile+" "+str(int((sortedFre[int(-2-i)])/float(dub+1)))
+				fren.append(sortedFre[int(-2-i)]/float(dub+1))
+				Yapl.append(sortedY[int(-2-i)])
+				i=i+1
+				j=j+1
+				if i>len(sortedFre)-5:
+					break
+			else:
+				i=i+1
+				if i>len(sortedFre)-5:
+					break
+		else:
+			i=i+1
+			if i>len(sortedFre)-5:
+				break
+
 	
 	# for z
 	i=0
-	while i < Nc:
-		#print i
-		if sortedY_z[int(-2-i)] > bgn_z+10*bgn_e_z and int(sortedFre[int(-2-i)]/float(dub+1))>1:
-			if len(fren_z)==0:
-				titlefre_z=titlefre_z+" "+str(int((sortedFre_z[int(-2-i)])/float(dub+1)))
-				fren_z.append(sortedFre_z[int(-2-i)]/float(dub+1))
-				i=i+1
-				
-			elif sum( [int((sortedFre_z[int(-2-i)])/float(dub+1))==int(j) for j in fren_z])==0 and int(sortedFre_z[int(-2-i)]/float(dub+1))>1:
-				titlefre_z=titlefre_z+" "+str(int((sortedFre_z[int(-2-i)])/float(dub+1)))
-				fren_z.append(sortedFre_z[int(-2-i)]/float(dub+1))
-				i=i+1
-			else:
-				Nc=Nc+1
-				i=i+1
-				
-		else:
+	j=0
+	Yapl_z=[]
+	while True:
+		if j>Nc:
 			break
+		#print i
+		if sortedY_z[int(-2-i)] > bgn_z:
+			if len(fren_z)==0:
+				titlefile_z=titlefile_z+" "+str(int((sortedFre_z[int(-2-i)])/float(dub+1)))
+				fren_z.append(sortedFre_z[int(-2-i)]/float(dub+1))
+				Yapl_z.append(sortedY_z[int(-2-i)])
+				i=i+1
+				j=j+1
+				if i>len(sortedFre_z)-5:
+					break
+			elif sum( [int((sortedFre_z[int(-2-i)])/float(dub+1))==int(j) for j in fren_z])==0 and int(sortedFre_z[int(-2-i)]/float(dub+1))>1:
+				titlefile_z=titlefile_z+" "+str(int((sortedFre_z[int(-2-i)])/float(dub+1)))
+				fren_z.append(sortedFre_z[int(-2-i)]/float(dub+1))
+				Yapl_z.append(sortedY_z[int(-2-i)])
+				i=i+1
+				j=j+1
+				if i>len(sortedFre_z)-5:
+					break
+			else:
+				i=i+1
+				if i>len(sortedFre_z)-5:
+					break
+		else:
+			i=i+1
+			if i>len(sortedFre_z)-5:
+					break
 
-	titlefre=titlefre+" in decreasing amplitude order"
-	titlefre_z=titlefre_z+" in decreasing amplitude order"
+	titlefre=titlefile+" in decreasing amplitude order"
+	titlefre_z=titlefile_z+" in decreasing amplitude order"
 	#print "title done"
 	
 	# only printing radial peaks
-	printtxt=" "
-	peakInt=" "
+	#printtxt=" "
+	#peakInt=" "
 	if opt!=0:
+		print titlefile
+		print Yapl
+	'''
 		#print N
 		if output==0:
 			for num in range(N):
@@ -210,6 +242,8 @@ def unevenfft(filename,Fs,N,dub,opt,output):
 				peakInt=peakInt+str(round(sortedFre_z[-int(N)+num]/float(dub+1)))+" "
 		print peakInt
 		print printtxt
+		'''
+		
 	
 	
 	fig, ax = plt.subplots(4, 1,figsize=(9,11))
@@ -220,7 +254,7 @@ def unevenfft(filename,Fs,N,dub,opt,output):
 	ax[0].set_title("Time: "+TimeGenerate(t,4,10))
 	
 	ax[1].semilogy(frq/float(dub+1),abs(Y),'r') # plotting the spectrum
-	ax[1].plot(np.array(sortedFre[-int(N+1):-1])/float(dub+1),sortedY[-int(N+1):-1],'.')
+	ax[1].plot(fren,Yapl,'.')
 	ax[1].set_title(titlefre)
 	#ax[1].set_xlim([0.5,max(frq)/float(dub+1)])
 	ax[1].set_xlim([0.5,50])
@@ -238,12 +272,12 @@ def unevenfft(filename,Fs,N,dub,opt,output):
 	ax[2].set_ylabel('Z [planet radii]')
 	
 	ax[3].semilogy(frq/float(dub+1),abs(Y_z),'r') # plotting the spectrum
-	ax[3].plot(np.array(sortedFre_z[-int(N+1):-1])/float(dub+1),sortedY_z[-int(N+1):-1],'.')
+	ax[3].plot(fren_z,Yapl_z,'.')
 	ax[3].set_title(titlefre_z)
 	ax[3].set_xlim([1,max(frq)/float(dub+1)])
 	#rangeY_z=sortedY_z[0]-sortedY_z[-1]
 	#ax[3].set_ylim([sortedY_z[0]+0.5*rangeY_z,sortedY_z[0]-0.1*rangeY_z])
-	ax[3].set_ylim([1e-15,1e-1])
+	ax[3].set_ylim([1e-20,1e-1])
 	#ax[3].set_xlim([0.5,max(frq)/float(dub+1)])
 	ax[3].set_xlim([0.5,50])
 	ax[3].set_xlabel('Freq (1/degrees)')
