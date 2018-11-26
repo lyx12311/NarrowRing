@@ -224,8 +224,18 @@ def unevenfft(filename,Fs,N,dub,opt,output):
 	#printtxt=" "
 	#peakInt=" "
 	if opt!=0:
-		print titlefile
-		print Yapl
+		if output==0:
+			print titlefile
+			Yaplp=' '
+			for i in Yapl:
+				Yaplp=Yaplp+str(i)+" "
+			print Yaplp
+		if output==1:
+			print titlefile_z
+			Yaplp_z=' '
+			for i in Yapl_z:
+				Yaplp_z=Yaplp_z+str(i)+" "
+			print Yaplp_z
 	'''
 		#print N
 		if output==0:
