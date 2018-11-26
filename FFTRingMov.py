@@ -16,6 +16,7 @@ from hnread import *
 from center_angle import *
 from plotScatter import *
 from unevenfft import *
+from unevenfft_res import *
 from TimeGenerate import *
 d2r = 0.01745329251
 r2d = 57.2957795131
@@ -76,7 +77,17 @@ for file in glob.glob(os.path.join(path,'state*.dat')):
 if Opt==0:
 	print "Total number of files: " +str(numfile)	
 numfilec=0
-for file in glob.glob(os.path.join(path,'state*.dat')):
+
+statenum=[]
+filenames=[]
+for files in glob.glob(os.path.join(path,'state*.dat')):
+	filenames.append(files)
+	#print files.split('.')
+	statenum.append(float(files.split('.')[-2].split('te')[1]))
+
+statenum,filenames=zip(*sorted(zip(statenum,filenames)))
+
+for file in filenames:
 	numfilec+=1
 	#print file
 	if Opt==0:
@@ -88,6 +99,7 @@ for file in glob.glob(os.path.join(path,'state*.dat')):
 	PNGName = str(name[-1])
 	try:
 		unevenfft(file,numbpart*10,10,10,Opt,outputInt)
+		#unevenfft_res(file,numbpart*10,10,10,Opt,outputInt)
 		#print str(path)+"/pngfiles/"+PNGName+'.png'
 		plt.savefig(str(path)+"/pngfiles/"+PNGName+'.png')
 		plt.close()
