@@ -31,7 +31,7 @@ def checkinput(argv):
     if not os.path.isdir(gridfile):  # Exit if folder does not exist                  
         print 'ERROR: unable to locate folder ' + gridfile                             
         sys.exit(1)                                                                            
-
+hl='18'
 # check error
 checkinput(sys.argv)
 
@@ -60,18 +60,18 @@ for file in glob.glob(os.path.join(path,'state*.dat')):
 filenumb, filename = zip(*sorted(zip([int(i) for i in filenumb],filename)))
 print "first file to read is: state"+str(filenumb[0])+".dat"
 
-a = getEle(filename[0],'a')
-e = getEle(filename[0],'e')
-cw = getEle(filename[0],'cw')
-nu = getEle(filename[0],'nu')
-i = getEle(filename[0],'i')
-W = getEle(filename[0],'W')
+a = getEle(filename[0],'a',hl)
+e = getEle(filename[0],'e',hl)
+cw = getEle(filename[0],'cw',hl)
+nu = getEle(filename[0],'nu',hl)
+i = getEle(filename[0],'i',hl)
+W = getEle(filename[0],'W',hl)
 
 radiusfirstfile = a*(1.-e*e)/(1.+e*np.cos(nu*d2r))
 zfirstfile = a*(1.-e*e)/(1.+e*np.cos(nu*d2r))*np.sin(i*d2r)*np.sin((cw-W+nu)*d2r)
 
 a_ave=np.mean(a)
-e_ave=np.mean(getEle(filename[0],'e'))
+e_ave=np.mean(getEle(filename[0],'e',hl))
 z_ave=np.mean(zfirstfile)
 
 ### define min and max for plotting
@@ -87,12 +87,12 @@ mindr=0
 numfile=0
 ####### calculate the min and max for plotting after reading each files ###############################
 for file in filename:
-	semiAxis = getEle(file,'a')
-	e = getEle(file,'e')
-	cw = getEle(file,'cw')
-	nu = getEle(file,'nu')
-	i = getEle(file,'i')
-	W = getEle(file,'W')
+	semiAxis = getEle(file,'a',hl)
+	e = getEle(file,'e',hl)
+	cw = getEle(file,'cw',hl)
+	nu = getEle(file,'nu',hl)
+	i = getEle(file,'i',hl)
+	W = getEle(file,'W',hl)
 
 	radius = a*(1.-e*e)/(1.+e*np.cos(nu*d2r))
 	z = a*(1.-e*e)/(1.+e*np.cos(nu*d2r))*np.sin(i*d2r)*np.sin((cw-W+nu)*d2r)
@@ -181,14 +181,14 @@ for file in glob.glob(os.path.join(path,'state*.dat')):
 	maxlim=180		
 			
 	
-	semiAxis = getEle(file,'a')
-	cw = getEle(file,'cw')
-	LongTit = cw+getEle(file,'M')
-	e = getEle(file,'e')
-	nu = getEle(file,'nu')
-	i = getEle(file,'i')
-	W = getEle(file,'W')
-	t = getEle(file,'t')
+	semiAxis = getEle(file,'a',hl)
+	cw = getEle(file,'cw',hl)
+	LongTit = cw+getEle(file,'M',hl)
+	e = getEle(file,'e',hl)
+	nu = getEle(file,'nu',hl)
+	i = getEle(file,'i',hl)
+	W = getEle(file,'W',hl)
+	t = getEle(file,'t',hl)
 	
 	radius = semiAxis*(1.-e*e)/(1.+e*np.cos(nu*d2r))
 	z = semiAxis*(1.-e*e)/(1.+e*np.cos(nu*d2r))*np.sin(i*d2r)*np.sin((cw-W+nu)*d2r)
@@ -226,6 +226,7 @@ for file in glob.glob(os.path.join(path,'state*.dat')):
 		ax1.set_title('r top view [planet radii]')
 		ax1.set_ylim([minr, maxr])
 		ax1.plot(np.array(LongTit_up)*d2r,radius_up,'ro',np.array(LongTit_down)*d2r,radius_down,'bo')
+		#print(LongTit_up)
 	
 		ax2 = plt.subplot(2,2,4)
 

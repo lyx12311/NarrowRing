@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# Author: Lucy Lu (last update 08/09/2018)
+# Author: Lucy Lu (last update 08/01/2019)
 # Contain functions: 
 #	geta(check,Out), gete(check,Out) till getw(check,Out) calculates the element based on input
 #	getM(check,Out) till getlatT(check,Out) calculates the element based on input and functions in the previous line
@@ -179,10 +179,11 @@ def getlatT(check,Out):
 	else:
 		return 0
 
-def getEle(filename,elementout):
-	data=hnread(filename,"state")
+def getEle(filename,elementout,hl='17'):
+	hl=int(hl)
+	data=hnread(filename,"state",hl)
 	OutputData=np.zeros((len(data),26))
-	headerline=np.array(hnread(filename,"headerline"))
+	headerline=np.array(hnread(filename,"headerline",hl))
 	for i in range(len(headerline)):
 		OutputData[:,int(headerline[i])]=data[:,i]
 	#print type(OutputData)
