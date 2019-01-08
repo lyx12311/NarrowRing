@@ -12,7 +12,7 @@ import random
 from hnhelper import *
 
 
-d2r = 0.01745329251
+d2r = np.pi/180.
 r2d = 57.2957795131
 
 GM =  171982516.97368595#5.683e26*6.67e-11 #first line of body file
@@ -63,49 +63,101 @@ def MconvHn(filename):
 headert=MconvHn(filename)
 tempF="tempM.in"
 Rp,J2=hnread("input.hnb","input")
+################################################################################################################################################################
+# calculate frequencies to second order J2, eccentricity and inclination
+def calcK(GM,a,e,i):
+	i=i*d2r
+	return np.sqrt(GM/np.power(a,3.))*(1.-3./4.*np.power((1/a),2)*J2-9./32.*np.power((1/a),4)*np.power(J2,2.)-9.*np.power((1/a),2)*J2*np.power(i,2.))
 
-# calculate frequencies
-def calcK(GM,a,Rp,J2):
-	return np.sqrt(GM/np.power(a,3.))*(1.-3./4.*np.power((1/a),2)*J2)
+def calcN(GM,a,e,i):
+	i=i*d2r
+	return np.sqrt(GM/np.power(a,3.))*(1.+9./4.*np.power((1/a),2)*J2-81./32.*np.power((1/a),4)*np.power(J2,2.)+6.*np.power((1/a),2)*J2*np.power(e,2.)-51./4.*np.power((1/a),2)*J2*np.power(i,2.))
 
-def calcN(GM,a,Rp,J2):
-	return np.sqrt(GM/np.power(a,3.))*(1.+9./4.*np.power((1/a),2)*J2)
+def Calc_Omega(GM,a,e,i):
+	i=i*d2r
+	return np.sqrt(GM/np.power(a,3.))*(1.+3./4.*np.power((1/a),2)*J2-9./32.*np.power((1/a),4)*np.power(J2,2.)+3.*np.power((1/a),2)*J2*np.power(e,2.)-12.*np.power((1/a),2)*J2*np.power(i,2.))
 	
-def calcX2(GM,a,Rp,J2):
+def calcX2(GM,a):
 	return GM/np.power(a,3.)*(1.+15./2.*np.power((1/a),2)*J2)
 
-def Calc_Omega(GM,a,Rp,J2):
-	return np.sqrt(GM/np.power(a,3.))*(1.+3./4.*np.power((1/a),2)*J2)
+def calcada2(GM,a):
+	return GM/np.power(a,3.)*(1.-2.*np.power((1/a),2)*J2)
 
+def calcalpha1(N,K):
+	return 1./3.*(2.*N+K)
+
+def calcalpha2(N,K):
+	return 2.*N-K
+
+####################################################################################################################################################################################
 # caculate r, theta, z and drdt, dthetadt, dzdt (inputs are degrees)
-def calc_re(a,e,M):
+def calc_re(w,cw,M,a,e,i):
 	M=M*d2r
-	return a*(1.-e*np.cos(M))
-	
-def calc_ze(a,i,w,M):
-	M=M*d2r
-	i=i*d2r
 	w=w*d2r
-	return a*i*np.sin(w+M)
+	i=i*d2r
+	ada2=calcada2(GM,a)
+	K=calcK(GM,a,e,i)
+	X2=calcX2(GM,a)
+	return a*(1.-e*np.cos(M)+np.power(e,2.)*(1.5*ada2/np.power(K,2.)-1.-0.5*ada2/np.power(K,2.)*np.cos(2.*M))+np.power(i,2.)*(3./4.*X2/np.power(K,2.)-1.+0.25*X2/np.power(K,2.)*np.cos(2.*(M+w))))
 
-def calc_thetae(cw,M,Omega,K,e):
+def calc_thetae(w,cw,M,a,e,i):
 	M=M*d2r
 	cw=cw*d2r
-	return cw+M+2.*Omega/K*e*np.sin(M)
-
-def calc_drdt(a,K,e,M):
-	M=M*d2r
-	return a*K*e*np.sin(M)
-	
-def calc_dzdt(a,i,N,w,M):
-	M=M*d2r
 	w=w*d2r
 	i=i*d2r
-	return a*i*N*(np.cos(w+M))
-	
-def calc_dthetadt(Omega,e,M):
+	Omega=Calc_Omega(GM,a,e,i)
+	K=calcK(GM,a,e,i)
+	N=calcN(GM,a,e,i)
+	alphasq=calcalpha1(N,K)*calcalpha2(N,K)
+	return cw+M+2.*Omega/K*e*np.sin(M)+np.power(e,2)*(3./4.+0.5*calcada2(GM,a)/np.power(K,2.))*Omega/K*np.sin(2.*(M))-0.25*np.power(i,2)*calcX2(GM,a)/alphasq*Omega/N*np.sin(2.*(w+M))
+		
+def calc_ze(w,cw,M,a,e,i):
 	M=M*d2r
-	return (1.+2.*e*np.cos(M))*Omega
+	i=i*d2r
+	w=w*d2r
+	X2=calcX2(GM,a)
+	N=calcN(GM,a,e,i)
+	K=calcK(GM,a,e,i)
+	alpha2=calcalpha2(N,K)
+	alpha1=calcalpha1(N,K)
+	return a*i*(np.sin(w+M)+0.5*e*X2/K/alpha1*np.sin(w+2.*M)-e*1.5*X2/K/alpha2*np.sin(w))
+
+def calc_drdt(w,cw,M,a,e,i):
+	M=M*d2r
+	i=i*d2r
+	w=w*d2r
+	X2=calcX2(GM,a)
+	N=calcN(GM,a,e,i)
+	K=calcK(GM,a,e,i)
+	alpha2=calcalpha2(N,K)
+	alpha1=calcalpha1(N,K)
+	ada2=calcada2(GM,a)
+	X2=calcX2(GM,a)
+	alphasq=calcalpha1(N,K)*calcalpha2(N,K)
+	return a*K*(e*np.sin(M)+np.power(e,2)*ada2/np.power(K,2)*np.sin(2.*M)-np.power(i,2)*0.5*X2/alphasq*N/K*np.sin(2.*(w+M)))
+	
+def calc_dzdt(w,cw,M,a,e,i):
+	M=M*d2r
+	i=i*d2r
+	w=w*d2r
+	X2=calcX2(GM,a)
+	N=calcN(GM,a,e,i)
+	K=calcK(GM,a,e,i)
+	alpha2=calcalpha2(N,K)
+	alpha1=calcalpha1(N,K)
+	return a*i*N*(np.cos(w+M)+0.5*e*X2*(K+N)/K/alpha1/N*np.cos(w+2.*M)+e*1.5*X2*(K-N)/K/alpha2/N*np.cos(w+M))
+	
+def calc_dthetadt(w,cw,M,a,e,i):
+	M=M*d2r
+	i=i*d2r
+	w=w*d2r
+	X2=calcX2(GM,a)
+	N=calcN(GM,a,e,i)
+	K=calcK(GM,a,e,i)
+	ada2=calcada2(GM,a)
+	alphasq=calcalpha1(N,K)*calcalpha2(N,K)
+	Omega=Calc_Omega(GM,a,e,i)
+	return (1.+2.*e*np.cos(M)+np.power(e,2.)*(3.5-3.*ada2/np.power(K,2.)-np.power(K,2.)/2./np.power(Omega,2.)+(1.5+ada2/np.power(K,2.))*np.cos(2*M))+np.power(i,2.)*(2.-np.power(K,2.)/2./np.power(Omega,2.)-1.5*X2/np.power(K,2.)-X2/2./alphasq*np.cos(2.*(w+M))))*Omega
 
 # inputs are radians
 def getx(r,theta):
@@ -148,26 +200,20 @@ w=getEle(tempF,"w")
 cw=getEle(tempF,"cw")
 Mass=getEle(tempF,"mass")
 for i in range(len(a)):
-
-	Omega=Calc_Omega(GM,a[i],Rp,J2)
-	K=calcK(GM,a[i],Rp,J2)
-	N=calcN(GM,a[i],Rp,J2)
-	X2=calcX2(GM,a[i],Rp,J2)
-	
-	r=calc_re(a[i],e[i],M[i])
-	theta=calc_thetae(cw[i],M[i],Omega,K,e[i])
+	r=calc_re(w[i],cw[i],M[i],a[i],e[i],I[i])
+	theta=calc_thetae(w[i],cw[i],M[i],a[i],e[i],I[i])
 	#print(theta)
-	drdt=calc_drdt(a[i],K,e[i],M[i])
-	dthetadt=calc_dthetadt(Omega,e[i],M[i])
+	drdt=calc_drdt(w[i],cw[i],M[i],a[i],e[i],I[i])
+	dthetadt=calc_dthetadt(w[i],cw[i],M[i],a[i],e[i],I[i])
 	
 	mass=Mass[i]
 	x=getx(r,theta)
 	y=gety(r,theta)
-	z=calc_ze(a[i],I[i],w[i],M[i])
+	z=calc_ze(w[i],cw[i],M[i],a[i],e[i],I[i])
 	
 	vx=getvx(r,theta,drdt,dthetadt)
 	vy=getvy(r,theta,drdt,dthetadt)
-	vz=calc_dzdt(a[i],I[i],N,w[i],M[i])
+	vz=calc_dzdt(w[i],cw[i],M[i],a[i],e[i],I[i])
 	
 	fw.write(str(mass)+" "+str(x)+" "+str(y)+" "+str(z)+" "+str(vx)+" "+str(vy)+" "+str(vz)+"\n")
 print("J2 is: "+str(J2))
