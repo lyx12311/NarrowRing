@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# Author: Lucy Lu (last update 08/03/2018)
+# Author: Lucy Lu (last update 01/08/2019)
 # Contain functions: 
 #	TimeGenerate(t,printdes,length) [generate a time string for plotting]
 #		t: one float/double time (t)
@@ -29,24 +29,27 @@ def TimeGenerate(t,printdes,length):
 	#print timeparts
 	timeprint=[]
 	k=0
-	for i in range(len(timeparts)+int(printdes)):
-		if timeparts[i]=='.':
-			timeprint.append(timeparts[i])
-			k+=1
-		else:
-			if k==1:
-				if printdes > len(timeparts)-i:
-					timeparts=timeparts+'0'*printdes
-					#print timeparts
-				while k < printdes+1:
-					#print(timeparts[i])
-					timeprint.append(timeparts[i])
-					k+=1
-					i+=1
-				break
-			else:
+	if 'e' not in timeparts:
+		for i in range(len(timeparts)+int(printdes)):
+			if timeparts[i]=='.':
 				timeprint.append(timeparts[i])
+				k+=1
+			else:
+				if k==1:
+					if printdes > len(timeparts)-i:
+						timeparts=timeparts+'0'*printdes
+						#print timeparts
+					while k < printdes+1:
+						#print(timeparts[i])
+						timeprint.append(timeparts[i])
+						k+=1
+						i+=1
+					break
+				else:
+					timeprint.append(timeparts[i])
 				
-	#print timeprint	
-	timeprint=''.join(map(str, timeprint))	
-	return int(length-len(timeprint))*" "+ timeprint
+		#print timeprint	
+		timeprint=''.join(map(str, timeprint))	
+		return int(length-len(timeprint))*" "+ timeprint
+	else:
+		return timeparts
