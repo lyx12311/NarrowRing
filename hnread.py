@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# Author: Lucy Lu (last update 01/07/2019)
+# Author: Lucy Lu (last update 01/09/2019)
 # Contain functions: 
 #	hnread(filename,typename) [reads files produced by hnbody]
 #		filename: file path
@@ -77,15 +77,22 @@ def logread(filename,hl):
 		cputime=parts[-2].split()
 		return float(cputime[4])
 
-# number of particles			
-def streamread(filename,hl):
+# number of particles and initial a from stream		
+def streamread(filename,hl,aout):
 	with open(filename) as stf:
 		parts=stf.readlines()
 		for lines in parts:
 			if "N " in lines:
 				numbP_l=lines.split("=")[1].split(" ")
 				numbP_l=list(filter(None,numbP_l))
-		return float(numbP_l[0])
+			if "a " in lines and 'da' not in lines:
+				#print(lines)
+				initiala=lines.split("=")[1].split(" ")
+				initiala=list(filter(None,initiala))
+		if aout=='0':
+			return float(numbP_l[0])
+		else:
+			return float(numbP_l[0]),float(initiala[0])
 
 # Rp and J2
 def inputread(filename,hl):
@@ -106,11 +113,14 @@ dic = {"state":stateread,"body":bodyread,"headerline":headread,"user":userread,"
 d2r = 0.01745329251
 r2d = 57.2957795131
 # this function reads files produced by hnbody. It reads user.in files, state/body files, log files and stream production files
-def hnread(filename,typename,hl='17'):
-	#print typename
-	#return dic[str(typename)](filename)
+def hnread(filename,typename,hl='17',aout='0'):
+	#aout is from stream file
+	#hl is for headerline numbers
 	try:
-		return dic[str(typename)](filename,hl)	
+		if str(typename)=='stream':
+			return dic[str(typename)](filename,hl,aout)	
+		else:
+			return dic[str(typename)](filename,hl)	
 	except:
 		print "typename not recognized!" 
 		sys.exit(1)
