@@ -207,6 +207,7 @@ for file in filename:
 		radius=radius[satNo:len(LongTit2)]
 		z=z[satNo:len(LongTit2)]
        		LongTit2=LongTit2[satNo:len(LongTit2)]
+		
 	elif int(sys.argv[2])==1:  #rotating frame
 		LongTit2=[(center_angle(i,-180.,180.)) for i in LongTit]
 		LongTit2[satNo:len(LongTit2)],radius[satNo:len(LongTit2)],z[satNo:len(LongTit2)]=zip(*sorted(zip(LongTit2[satNo:len(LongTit2)],radius[satNo:len(LongTit2)],z[satNo:len(LongTit2)])))
@@ -226,7 +227,7 @@ for file in filename:
  		
 		radius=np.append(SecondRad,FirstRad)
 		z=np.append(Secondz,Firstz)
-       		LongTit2=np.append(FindSecond_Lon-LongTit2[0],[i-LongTit2[0]+360. for i in Findfirst_Lon])
+       		LongTit2=np.append(FindSecond_Lon-LongTit2[0]-180.,[i-LongTit2[0]+180. for i in Findfirst_Lon])
 
 		
 	else:
