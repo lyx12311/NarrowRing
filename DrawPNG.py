@@ -15,16 +15,16 @@ from TimeGenerate import *
 
 d2r = 0.01745329251
 r2d = 57.2957795131
-NameRotNRot=["Rot","NRot"]
+NameRotNRot=["NRot","Rot"]
 NameLinPol=["Lin","Pol"]  
                                                            
 def checkinput(argv):                                                                       
     programname = sys.argv[0]                                                               
-    if len(argv) != 4:  # Exit if not exactly one arguments  
+    if len(argv) != 6:  # Exit if not exactly 5 arguments  
     	print '---------------------------------------------------------------------------'                               
-        print 'This program creates a movie based on hnbody state files.\n It takes into 3 arguments.\n First argument: the folder name \n Second argument: non-rotating frame (0) or rotating frame (1) \n Third argument: linear plot (0) or polar plot (1)'
+        print 'This program creates a movie based on hnbody state files.\n It takes into 5 arguments.\n Argument 1: the folder name \n Argument 2: non-rotating frame (0) or rotating frame (1) \n Argument 3: linear plot (0) or polar plot (1)\n Argument 4: how many satellites involved\n Argument 5: how often to plot'
 	print ' '
-	print ' Example:    '+programname+' M1 0 0'  
+	print ' Example:    '+programname+' M1 0 0 2 200'  
 	print '---------------------------------------------------------------------------'                                    
         sys.exit(1)                                                                         
     gridfile = argv[1]                                                                                                                                    
@@ -35,7 +35,7 @@ hl='18'
 # check error
 checkinput(sys.argv)
 
-
+satNo=int(sys.argv[4])
 
 path=sys.argv[1] ## put second input into file 
 pathname=str(path)
@@ -52,12 +52,17 @@ zfirstfile = []
 # count and sort files
 filename=[]
 filenumb=[]
+
 for file in glob.glob(os.path.join(path,'state*.dat')):
 	filename_one =(file.split('/'))[-1]
 	filename.append(str(file))
 	filenumb.append(filename_one.split('e')[-1].split('.')[-2])
 
 filenumb, filename = zip(*sorted(zip([int(i) for i in filenumb],filename)))
+
+filename=filename[0::int(sys.argv[5])]
+#print(filename)
+
 print "first file to read is: state"+str(filenumb[0])+".dat"
 
 a = getEle(filename[0],'a',hl)
@@ -68,15 +73,17 @@ i = getEle(filename[0],'i',hl)
 W = getEle(filename[0],'W',hl)
 
 radiusfirstfile = a*(1.-e*e)/(1.+e*np.cos(nu*d2r))
+radiusfirstfile=radiusfirstfile[satNo:len(a)]
 zfirstfile = a*(1.-e*e)/(1.+e*np.cos(nu*d2r))*np.sin(i*d2r)*np.sin((cw-W+nu)*d2r)
+zfirstfile=zfirstfile[satNo:len(a)]
 
-a_ave=np.mean(a)
-e_ave=np.mean(getEle(filename[0],'e',hl))
+a_ave=np.mean(a[satNo:len(a)])
+e_ave=np.mean(getEle(filename[0],'e',hl)[satNo:len(a)])
 z_ave=np.mean(zfirstfile)
 
 ### define min and max for plotting
-maxSemiAxis=max(a)
-minSemiAxis=min(a)
+maxSemiAxis=max(a[satNo:len(a)])
+minSemiAxis=min(a[satNo:len(a)])
 maxr=max(radiusfirstfile)
 minr=min(radiusfirstfile)
 maxz=max(zfirstfile)
@@ -98,14 +105,15 @@ for file in filename:
 	z = a*(1.-e*e)/(1.+e*np.cos(nu*d2r))*np.sin(i*d2r)*np.sin((cw-W+nu)*d2r)
 	dr = a*(1.-e*e)/(1.+e*np.cos(nu*d2r))-a_ave*(1.-e_ave*e_ave)/(1.+e_ave*np.cos(nu*d2r))
 
-	maxSemiAxis = max(maxSemiAxis,max(semiAxis))
-	minSemiAxis = min(minSemiAxis,min(semiAxis))
-	maxr = max(maxr,max(radius))
-	minr = min(minr,min(radius))
-	maxdr = max(maxdr,max(dr))
-	mindr = min(mindr,min(dr))
-	minz = min(minz,min(z))
-	maxz = max(maxz,max(z))
+	lastele=len(semiAxis)
+	maxSemiAxis = max(maxSemiAxis,max(semiAxis[satNo:lastele]))
+	minSemiAxis = min(minSemiAxis,min(semiAxis[satNo:lastele]))
+	maxr = max(maxr,max(radius[satNo:lastele]))
+	minr = min(minr,min(radius[satNo:lastele]))
+	maxdr = max(maxdr,max(dr[satNo:lastele]))
+	mindr = min(mindr,min(dr[satNo:lastele]))
+	minz = min(minz,min(z[satNo:lastele]))
+	maxz = max(maxz,max(z[satNo:lastele]))
 	
 # chech sign and set limit
 if maxSemiAxis == minSemiAxis:
@@ -169,14 +177,14 @@ else:
 
 print "finished calculating min and max"	
 ####### make each state file into png files ###############################
-print "Number of files to process is: " +str(len(filenumb))
+print "Number of files to process is: " +str(len(filename))
 countnum=0				
-for file in glob.glob(os.path.join(path,'state*.dat')):
+for file in filename:
 	countnum+=1
-	if int(float(countnum)/len(filenumb)*100)-int(float(countnum-1)/len(filenumb)*100)!=0:
-		print str(int(float(countnum)/len(filenumb)*100))+"% done"
+	if int(float(countnum)/len(filename)*100)-int(float(countnum-1)/len(filename)*100)!=0:
+		print str(int(float(countnum)/len(filename)*100))+"% done"
 	name = file.split('/')
-	PNGName = str(name[-1])
+	PNGName = 'state'+str(countnum)
 	minlim=-180
 	maxlim=180		
 			
@@ -195,8 +203,32 @@ for file in glob.glob(os.path.join(path,'state*.dat')):
 	
 	if int(sys.argv[2])==0:
 		LongTit2=[(center_angle(i,-180.,180.)) for i in LongTit]
-	elif int(sys.argv[2])==1:
-		LongTit2=[(center_angle(i-LongTit[0],-180.,180.)) for i in LongTit]
+		
+		radius=radius[satNo:len(LongTit2)]
+		z=z[satNo:len(LongTit2)]
+       		LongTit2=LongTit2[satNo:len(LongTit2)]
+	elif int(sys.argv[2])==1:  #rotating frame
+		LongTit2=[(center_angle(i,-180.,180.)) for i in LongTit]
+		LongTit2[satNo:len(LongTit2)],radius[satNo:len(LongTit2)],z[satNo:len(LongTit2)]=zip(*sorted(zip(LongTit2[satNo:len(LongTit2)],radius[satNo:len(LongTit2)],z[satNo:len(LongTit2)])))
+		startLong_ind=0
+        	for i in LongTit2[satNo:len(LongTit2)]:
+               		if (i-LongTit2[0])<0:
+               			startLong_ind=startLong_ind+1
+		#print(startLong_ind)
+		Findfirst_Lon=LongTit2[satNo:satNo+startLong_ind]
+        	FindSecond_Lon=LongTit2[satNo+startLong_ind:len(LongTit2)]
+        
+       		FirstRad=radius[satNo:satNo+startLong_ind]
+       		SecondRad=radius[satNo+startLong_ind:len(LongTit2)]
+		
+       		Firstz=z[satNo:satNo+startLong_ind]
+       		Secondz=z[satNo+startLong_ind:len(LongTit2)]
+ 		
+		radius=np.append(SecondRad,FirstRad)
+		z=np.append(Secondz,Firstz)
+       		LongTit2=np.append(FindSecond_Lon-LongTit2[0],[i-LongTit2[0]+360. for i in Findfirst_Lon])
+
+		
 	else:
 		print "input for rotating/non-rotating frame must be 0 or 1"
 		sys.exit(1)
@@ -330,9 +362,9 @@ for file in glob.glob(os.path.join(path,'state*.dat')):
 		sys.exit(1)
 FolderName=path.split('/')
 if FolderName[-1]=='.':
-	os.system("ffmpeg -framerate 10 -i "+str(path)+"/pngfiles/"+"state%d.dat.png -loglevel warning -pix_fmt yuv420p -y " + NameRotNRot[int(sys.argv[2])] + "_" + NameLinPol[int(sys.argv[3])] + ".mp4")
+	os.system("ffmpeg -framerate 10 -i "+str(path)+"/pngfiles/"+"state%d.png -loglevel warning -pix_fmt yuv420p -y " + NameRotNRot[int(sys.argv[2])] + "_" + NameLinPol[int(sys.argv[3])] + ".mp4")
 else:
-	os.system("ffmpeg -framerate 10 -i "+ str(path)+"/pngfiles/state%d.dat.png -loglevel warning -pix_fmt yuv420p -y "+FolderName[-1]+"_"+NameRotNRot[int(sys.argv[2])]+"_"+NameLinPol[int(sys.argv[3])]+".mp4")
+	os.system("ffmpeg -framerate 10 -i "+ str(path)+"/pngfiles/state%d.png -loglevel warning -pix_fmt yuv420p -y "+FolderName[-1]+"_"+NameRotNRot[int(sys.argv[2])]+"_"+NameLinPol[int(sys.argv[3])]+".mp4")
 	os.system("mv "+FolderName[-1]+"_"+NameRotNRot[int(sys.argv[2])]+"_"+NameLinPol[int(sys.argv[3])]+".mp4 "+str(path))
 
-os.system("rm -rf "+str(path)+"/pngfiles")
+#os.system("rm -rf "+str(path)+"/pngfiles")
