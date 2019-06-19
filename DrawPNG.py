@@ -227,7 +227,7 @@ for file in filename:
  		
 		radius=np.append(SecondRad,FirstRad)
 		z=np.append(Secondz,Firstz)
-       		LongTit2=np.append(FindSecond_Lon-LongTit2[0]-180.,[i-LongTit2[0]+180. for i in Findfirst_Lon])
+       		LongTit2=np.append(FindSecond_Lon-LongTit2[0],[i-LongTit2[0]+360. for i in Findfirst_Lon])
 
 		
 	else:
@@ -266,11 +266,14 @@ for file in filename:
 		ax2.plot(LongTit_up,z_up,'ro',LongTit_down,z_down,'bo')
 		if int(sys.argv[2])==0:
 			ax2.set_xlabel('Non-Rotating Longtitude [degrees]')
+			ax2.set_ylabel('z [planet radii]')
+			ax2.set_xlim([-180,180])
+			ax2.set_ylim([minz,maxz])
 		elif int(sys.argv[2])==1:
 			ax2.set_xlabel('Rotating Longtitude [degrees]')
-		ax2.set_ylabel('z [planet radii]')
-		ax2.set_xlim([-180,180])
-		ax2.set_ylim([minz,maxz])
+			ax2.set_ylabel('z [planet radii]')
+			ax2.set_xlim([0,360])
+			ax2.set_ylim([minz,maxz])
 	
 		ax3 = plt.subplot(2,2,3, projection='polar')
 		ax3.set_title('z polar plot [planet radii]')
@@ -279,14 +282,27 @@ for file in filename:
 	
 		ax4 = plt.subplot(2,2,2)
 		ax4.plot(LongTit_up,radius_up,'ro',LongTit_down,radius_down,'bo')
+		
+		'''
+		def test_func(x, a, b, c, d):
+    			return -abs(a) * np.cos(np.deg2rad(b * x +d))+c
+		from scipy import optimize
+		params, params_covariance = optimize.curve_fit(test_func, LongTit2, radius, p0=[(max(radius)-min(radius))/2., 7., np.mean(radius),0.])
+		ax4.plot(LongTit2,test_func(LongTit2,params[0],params[1],params[2],params[3]),'--')
+		#plt.show()
+		'''
 		if int(sys.argv[2])==0:
 			ax4.set_xlabel('Non-Rotating Longtitude [degrees]')
+			ax4.set_ylabel('r [planet radii]')
+			ax4.set_xlim([-180,180])
+			ax4.set_ylim([minr,maxr])
 		elif int(sys.argv[2])==1:
 			ax4.set_xlabel('Rotating Longtitude [degrees]')
-		ax4.set_ylabel('r [planet radii]')
-		ax4.set_xlim([-180,180])
-		ax4.set_ylim([minr,maxr])
+			ax4.set_ylabel('r [planet radii]')
+			ax4.set_xlim([0,360])
+			ax4.set_ylim([minr,maxr])
 	
+		
 		if int(sys.argv[2])==0:
 			plt.suptitle('Non-Rotating Frame, Time: '+ TimeGenerate(t[0],4,10))
 		elif int(sys.argv[2])==1:
