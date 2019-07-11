@@ -231,7 +231,7 @@ for file in filename:
 
 		
 	else:
-		print "input for rotating/non-rotating frame must be 0 or 1"
+		print "input for rotating/Inertial frame must be 0 or 1"
 		sys.exit(1)
 		
 	### create polar plots	
@@ -265,12 +265,12 @@ for file in filename:
 
 		ax2.plot(LongTit_up,z_up,'ro',LongTit_down,z_down,'bo')
 		if int(sys.argv[2])==0:
-			ax2.set_xlabel('Non-Rotating Longtitude [degrees]')
+			ax2.set_xlabel('Inertial Longitude [degrees]')
 			ax2.set_ylabel('z [planet radii]')
 			ax2.set_xlim([-180,180])
 			ax2.set_ylim([minz,maxz])
 		elif int(sys.argv[2])==1:
-			ax2.set_xlabel('Rotating Longtitude [degrees]')
+			ax2.set_xlabel('Rotating Longitude [degrees]')
 			ax2.set_ylabel('z [planet radii]')
 			ax2.set_xlim([0,360])
 			ax2.set_ylim([minz,maxz])
@@ -292,19 +292,19 @@ for file in filename:
 		#plt.show()
 		'''
 		if int(sys.argv[2])==0:
-			ax4.set_xlabel('Non-Rotating Longtitude [degrees]')
+			ax4.set_xlabel('Inertial Longitude [degrees]')
 			ax4.set_ylabel('r [planet radii]')
 			ax4.set_xlim([-180,180])
 			ax4.set_ylim([minr,maxr])
 		elif int(sys.argv[2])==1:
-			ax4.set_xlabel('Rotating Longtitude [degrees]')
+			ax4.set_xlabel('Rotating Longitude [degrees]')
 			ax4.set_ylabel('r [planet radii]')
 			ax4.set_xlim([0,360])
 			ax4.set_ylim([minr,maxr])
 	
 		
 		if int(sys.argv[2])==0:
-			plt.suptitle('Non-Rotating Frame, Time: '+ TimeGenerate(t[0],4,10))
+			plt.suptitle('Inertial Frame, Time: '+ TimeGenerate(t[0],4,10))
 		elif int(sys.argv[2])==1:
 			plt.suptitle('Rotating Frame, Time: '+ TimeGenerate(t[0],4,10))
 		plt.savefig(str(path)+"/pngfiles/"+PNGName+'.png')
@@ -326,9 +326,9 @@ for file in filename:
 		plt.subplot(2,2,1)
 		plt.plot(LongTit_semi,semiAxis,'-o')
 		if int(sys.argv[2])==0:
-			plt.xlabel('Non-Rotating Longtitude [degrees]')
+			plt.xlabel('Inertial Longitude [degrees]')
 		elif int(sys.argv[2])==1:
-			plt.xlabel('Rotating Longtitude [degrees]')
+			plt.xlabel('Rotating Longitude [degrees]')
 		plt.ylabel('Semi-major Axis [planet radii]')
 		plt.ylim([minSemiAxis, maxSemiAxis])
 		plt.xlim([minlim,maxlim])
@@ -338,9 +338,9 @@ for file in filename:
 		plt.subplot(2,2,2)
 		plt.plot(LongTit_r,radius,'-o')
 		if int(sys.argv[2])==0:
-			plt.xlabel('Non-Rotating Longtitude [degrees]')
+			plt.xlabel('Inertial Longitude [degrees]')
 		elif int(sys.argv[2])==1:
-			plt.xlabel('Rotating Longtitude [degrees]')
+			plt.xlabel('Rotating Longitude [degrees]')
 		plt.ylabel('r [planet radii]')
 		plt.ylim([minr, maxr])
 		plt.xlim([minlim,maxlim])
@@ -349,7 +349,7 @@ for file in filename:
 		plt.subplot(2,2,3)
 		plt.plot(LongTit_dr,dr,'-o')
 		if int(sys.argv[2])==0:
-			plt.xlabel('Non-Rotating Longtitude [degrees]')
+			plt.xlabel('Inertial Longitude [degrees]')
 		elif int(sys.argv[2])==1:
 			plt.xlabel('Rotating Longtitude [degrees]')
 		plt.ylabel('dr [planet radii]')
@@ -360,15 +360,15 @@ for file in filename:
 		plt.subplot(2,2,4)
 		plt.plot(LongTit_z,z,'-o')
 		if int(sys.argv[2])==0:
-			plt.xlabel('Non-Rotating Longtitude [degrees]')
+			plt.xlabel('Inertial Longtitude [degrees]')
 		elif int(sys.argv[2])==1:
-			plt.xlabel('Rotating Longtitude [degrees]')
+			plt.xlabel('Rotating Longitude [degrees]')
 		plt.ylabel('z [planet radii]')
 		plt.ylim([minz, maxz])
 		plt.xlim([minlim,maxlim])
 	
 		if int(sys.argv[2])==0:
-			plt.suptitle('Non-Rotating Frame, Time: '+ TimeGenerate(t[0],4,10))
+			plt.suptitle('Inertial Frame, Time: '+ TimeGenerate(t[0],4,10))
 		elif int(sys.argv[2])==1:
 			plt.suptitle('Rotating Frame, Time: '+ TimeGenerate(t[0],4,10))
 		plt.savefig(str(path)+"/pngfiles/"+PNGName+'.png')
@@ -384,4 +384,4 @@ else:
 	os.system("ffmpeg -framerate 10 -i "+ str(path)+"/pngfiles/state%d.png -loglevel warning -pix_fmt yuv420p -y "+FolderName[-1]+"_"+NameRotNRot[int(sys.argv[2])]+"_"+NameLinPol[int(sys.argv[3])]+".mp4")
 	os.system("mv "+FolderName[-1]+"_"+NameRotNRot[int(sys.argv[2])]+"_"+NameLinPol[int(sys.argv[3])]+".mp4 "+str(path))
 
-#os.system("rm -rf "+str(path)+"/pngfiles")
+os.system("rm -rf "+str(path)+"/pngfiles")
