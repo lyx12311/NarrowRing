@@ -15,7 +15,7 @@ from hnhelper import *
 d2r = np.pi/180.
 r2d = 57.2957795131
 
-GM =  171982516.97368595#5.683e26*6.67e-11 #first line of body file
+GM =  171982516.97368595 #5.683e26*6.67e-11 #first line of body file
 
 def checkinput(argv):                                                                       
     programname = sys.argv[0]                                                               
@@ -65,23 +65,23 @@ tempF="tempM.in"
 Rp,J2=hnread("input.hnb","input")
 ################################################################################################################################################################
 # calculate frequencies to second order J2, eccentricity and inclination
+# calculate K
 def calcK(GM,a,e,i):
-	i=i*d2r
-	return np.sqrt(GM/np.power(a,3.))*(1.-3./4.*np.power((1/a),2)*J2-9./32.*np.power((1/a),4)*np.power(J2,2.)-9.*np.power((1/a),2)*J2*np.power(i,2.))
+	return np.sqrt(GM/np.power(a,3.))*(1.-3./4.*np.power((1./a),2)*J2-9./32.*np.power((1./a),4.)*np.power(J2,2.)-9.*np.power((1./a),2)*J2*np.power(i,2.))
 
+# calculate nu
 def calcN(GM,a,e,i):
-	i=i*d2r
-	return np.sqrt(GM/np.power(a,3.))*(1.+9./4.*np.power((1/a),2)*J2-81./32.*np.power((1/a),4)*np.power(J2,2.)+6.*np.power((1/a),2)*J2*np.power(e,2.)-51./4.*np.power((1/a),2)*J2*np.power(i,2.))
+	return np.sqrt(GM/np.power(a,3.))*(1.+9./4.*np.power((1./a),2.)*J2-81./32.*np.power((1./a),4.)*np.power(J2,2.)+6.*np.power((1./a),2)*J2*np.power(e,2.)-51./4.*np.power((1/a),2)*J2*np.power(i,2.))
 
+# calculate n
 def Calc_Omega(GM,a,e,i):
-	i=i*d2r
-	return np.sqrt(GM/np.power(a,3.))*(1.+3./4.*np.power((1/a),2)*J2-9./32.*np.power((1/a),4)*np.power(J2,2.)+3.*np.power((1/a),2)*J2*np.power(e,2.)-12.*np.power((1/a),2)*J2*np.power(i,2.))
+	return np.sqrt(GM/np.power(a,3.))*(1.+3./4.*np.power((1./a),2.)*J2-9./32.*np.power((1/a),4.)*np.power(J2,2.)+3.*np.power((1./a),2.)*J2*np.power(e,2.)-12.*np.power((1./a),2.)*J2*np.power(i,2.))
 	
 def calcX2(GM,a):
-	return GM/np.power(a,3.)*(1.+15./2.*np.power((1/a),2)*J2)
+	return GM/np.power(a,3.)*(1.+15./2.*np.power((1./a),2.)*J2)
 
 def calcada2(GM,a):
-	return GM/np.power(a,3.)*(1.-2.*np.power((1/a),2)*J2)
+	return GM/np.power(a,3.)*(1.-2.*np.power((1./a),2.)*J2)
 
 def calcalpha1(N,K):
 	return 1./3.*(2.*N+K)
@@ -95,10 +95,13 @@ def calc_re(w,cw,M,a,e,i):
 	M=M*d2r
 	w=w*d2r
 	i=i*d2r
+	cw=cw*d2r
 	ada2=calcada2(GM,a)
 	K=calcK(GM,a,e,i)
 	X2=calcX2(GM,a)
-	return a*(1.-e*np.cos(M)+np.power(e,2.)*(1.5*ada2/np.power(K,2.)-1.-0.5*ada2/np.power(K,2.)*np.cos(2.*M))+np.power(i,2.)*(3./4.*X2/np.power(K,2.)-1.+0.25*X2/np.power(K,2.)*np.cos(2.*(M+w))))
+	N=calcN(GM,a,e,i)
+	alpha2=calcalpha1(N,K)*calcalpha2(N,K)
+	return a*(1.-e*np.cos(M)+np.power(e,2.)*(1.5*ada2/np.power(K,2.)-1.-0.5*ada2/np.power(K,2.)*np.cos(2.*M))+np.power(i,2.)*(3./4.*X2/np.power(K,2.)-1.+0.25*X2/alpha2*np.cos(2.*(M+w))))
 
 def calc_thetae(w,cw,M,a,e,i):
 	M=M*d2r
@@ -108,13 +111,15 @@ def calc_thetae(w,cw,M,a,e,i):
 	Omega=Calc_Omega(GM,a,e,i)
 	K=calcK(GM,a,e,i)
 	N=calcN(GM,a,e,i)
+	ada2=calcada2(GM,a)
 	alphasq=calcalpha1(N,K)*calcalpha2(N,K)
-	return cw+M+2.*Omega/K*e*np.sin(M)+np.power(e,2)*(3./4.+0.5*calcada2(GM,a)/np.power(K,2.))*Omega/K*np.sin(2.*(M))-0.25*np.power(i,2)*calcX2(GM,a)/alphasq*Omega/N*np.sin(2.*(w+M))
+	return cw+M+2.*Omega/K*e*np.sin(M)+np.power(e,2)*(3./4.+0.5*ada2/np.power(K,2.))*Omega/K*np.sin(2.*(M))-0.25*np.power(i,2.)*calcX2(GM,a)/alphasq*Omega/N*np.sin(2.*(w+M))
 		
 def calc_ze(w,cw,M,a,e,i):
 	M=M*d2r
 	i=i*d2r
 	w=w*d2r
+	cw=cw*d2r
 	X2=calcX2(GM,a)
 	N=calcN(GM,a,e,i)
 	K=calcK(GM,a,e,i)
@@ -126,6 +131,7 @@ def calc_drdt(w,cw,M,a,e,i):
 	M=M*d2r
 	i=i*d2r
 	w=w*d2r
+	cw=cw*d2r
 	X2=calcX2(GM,a)
 	N=calcN(GM,a,e,i)
 	K=calcK(GM,a,e,i)
@@ -140,6 +146,7 @@ def calc_dzdt(w,cw,M,a,e,i):
 	M=M*d2r
 	i=i*d2r
 	w=w*d2r
+	cw=cw*d2r
 	X2=calcX2(GM,a)
 	N=calcN(GM,a,e,i)
 	K=calcK(GM,a,e,i)
@@ -151,6 +158,7 @@ def calc_dthetadt(w,cw,M,a,e,i):
 	M=M*d2r
 	i=i*d2r
 	w=w*d2r
+	cw=cw*d2r
 	X2=calcX2(GM,a)
 	N=calcN(GM,a,e,i)
 	K=calcK(GM,a,e,i)
@@ -176,7 +184,7 @@ def getvy(r,theta,drdt,dthetadt):
 fw=open(fileout,"w")
 fw.write("#462639 301 0 171982516.97368595 156816351.27765289 1\n")
 fw.write("#0 1.0000000000000001e-05 20000 8 18\n")
-fw.write("#0 21 1 2 3 4 5 6\n")
+fw.write("#21 1 2 3 4 5 6\n")
 fw.write("#\n")
 fw.write("# HNBody system state file (Bodycentric coordinates).\n")
 fw.write("#\n")
